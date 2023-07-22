@@ -1,0 +1,73 @@
+Actores:
+
+1. Director
+2. Administrador
+3. Docente
+4. Representante
+
+
+GESTIONAR PERSONAL ADMINISTRATIVO: Solo director
+
+Director: username, email, password
+
+Registrar director: post /direccion/nuevoDirector (Listo + comprobado)
+Iniciar sesion director: /direccion/iniciarSesion (Listo + comprobado)
+Cerrar sesion director: /direccion/cerrarSesion (Listo + comprobado)
+Eliminar director: delete /direccion/eliminarDirector (Listo + comprobado)
+
+
+Extra: Administrador
+Registrar administrador: post /direccion/administracion/registrarAdministrador (Listo + Comprobado)
+Eliminar administrador delete /direccion/administracion/:administrador/eliminarAdministrador (Listo + Comprobado)
+Habilitar administrador: get /direccion/:administrador/habilitarAdministrador (Listo + Comprobado)
+Inhabilitar administrador: get /direccion/:administrador/inhabilitarAdministrador (Listo + Comprobado)
+
+Iniciar sesion administrador: /administracion/iniciarSesion (Listo + Comprobado)
+Cerrar sesion administrador: /administrador/cerrarSesion (Listo + Comprobado)
+
+GESTIONAR DOCENTES: Solo para director y administrador
+
+Iniciar sesion docente: /docente/iniciarSesion (Listo + Comprobado)
+Cerrar sesion docente: /docente/cerrarSesion (Listo + Comprobado)
+
+Registrar docente: post /docente/registrarDocente (Listo + Comprobado)
+Retirar seccion docente: post /docente/:docente/retirarSeccion (Listo + Comprobado)
+Asignar secci�n docente: post /docente/:docente/asignarSecci�n (Listo + Comprobado)
+Habilitar docente: get /docente/:docente/habilitarDocente (Listo + Comprobado)
+Inhabilitar docente: get /docente/:docente/inhabilitarDocente (Listo + Comprobado)
+Eliminar docente: delete /docente/:docente/eliminardocente (Listo + Comprobado)
+
+Registrar representante: post /representante/nuevoRepresentante (Listo + Comprobado)
+Eliminar representante delete /representante/:representante (Listo + Comprobado)
+Editar Informaci�n representante: patch /representante/:representante (Listo + Comprobado)
+
+
+
+
+
+GESTIONAR ESTUDIANTES: Solo director y administrador
+
+(Estudiante es un atributo de Representante)
+
+A�adir estudiante: post /representante/:representante/estudiante/nuevoEstudiante (Listo + Comprobado)
+Mover seccion estudiante: get /representante/:representante/estudiante/:estudiante/moverSecci�n?secci�n (Listo + Comprobado)
+Editar estudiante: patch representante/:representante/estudiante/:estudiante/editarEstudiante (Listo + Comprobado)
+Retirar seccion estudiante: delete /representante/:representante/estudiante/:estudiante/retirarSecci�n (Listo + Comprobado)
+Registro estudiantil: patch /representante/:representante/estudiante/:estudiante/registroEstudiantil
+
+EVALUAR DESEMPE�O ESTUDIANTIL: Solo docente
+
+Cargar informe descriptivo: patch /estudiante/:estudiante/cargarInforme 
+Establecer rasgos personales: patch /estudiante/:estudiante/cargarRasgosPersonales
+Registrar calificativo final: patch /estudiante/:estudiante/registrarCalificativoFinal
+(Registrar nombre del proyecto escolar: patch /estudiante/:estudiante/registrarCalificativoFinal)
+
+VISUALIZAR DESEMPE�O DE ESTUDIANTES: Todos
+
+Constancia de estudios: get /estudiante/:estudiante/constanciaDeEstudios
+Boletin: get /estudiante/:estudiante/boletin
+Informe descriptivo: get /estudiante/:estudiante/informeDescriptivo
+
+
+
+
