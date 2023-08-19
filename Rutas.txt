@@ -42,9 +42,6 @@ Eliminar representante delete /representante/:representante (Listo + Comprobado)
 Editar Informaci�n representante: patch /representante/:representante (Listo + Comprobado)
 
 
-
-
-
 GESTIONAR ESTUDIANTES: Solo director y administrador
 
 (Estudiante es un atributo de Representante)
@@ -67,7 +64,3 @@ VISUALIZAR DESEMPE�O DE ESTUDIANTES: Todos
 Constancia de estudios: get /estudiante/:estudiante/constanciaDeEstudios
 Boletin: get /estudiante/:estudiante/boletin
 Informe descriptivo: get /estudiante/:estudiante/informeDescriptivo
-
-
-
-

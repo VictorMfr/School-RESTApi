@@ -4,7 +4,7 @@ const InformeDescriptivo = require('../models/informeDescriptivo');
 // Controlador para cargar el informe descriptivo por un docente
 const cargarInformeDescriptivo = async (req, res) => {
   const { lapso, descripcion } = req.body;
-  const docenteId = req.docente._id;
+  const docenteId = req.profesor._id;
 
   try {
     // Verificar que el docente esté autenticado antes de cargar el informe

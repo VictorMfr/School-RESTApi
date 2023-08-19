@@ -152,26 +152,30 @@ router.get('/docentes/:id_docente', directorOrAdministratorAuth, async (req, res
     }
 });
 
-
 // Ver estudiantes del profesor
 router.get('/profesor/estudiantes', professorAuth, async (req, res) => {
-  try {
+    try {
 
-    // Buscar todos los estudiantes que pertenecen a la misma sección que el profesor
-    const lista_estudiantes = await Representante.find({"hijos_estudiantes.hijo_estudiante.seccion": req.profesor.section});
+        // Buscar todos los estudiantes que pertenecen a la misma sección que el profesor
+        const lista_estudiantes = await Representante.find({ "hijos_estudiantes.hijo_estudiante.seccion": req.profesor.section });
 
-    let lista = [];
+        let lista = [];
 
-    lista_estudiantes.forEach(representante => {
-        representante.hijos_estudiantes.forEach(estudiante => {
-          lista.push(estudiante.hijo_estudiante);
+        lista_estudiantes.forEach(representante => {
+            representante.hijos_estudiantes.forEach(estudiante => {
+                lista.push({
+                    ...estudiante.hijo_estudiante,
+                    _id: estudiante._id,
+                    id_representante: representante._id
+                });
+            });
         });
-    });
 
-    res.send(lista);
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({ error: 'Error al obtener la lista de estudiantes del profesor' });
-  }
+        res.send(lista);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ error: 'Error al obtener la lista de estudiantes del profesor' });
+    }
 });
+
 module.exports = router;

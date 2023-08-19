@@ -4,8 +4,8 @@ const RasgosPersonales = require('../models/rasgosPersonales');
 // Controlador para establecer los rasgos personales por un docente o administrador
 const establecerRasgosPersonales = async (req, res) => {
   const { lapso, rasgos } = req.body;
-  const userId = req.administrador ? req.administrador._id : req.docente._id;
-  const userType = req.administrador ? 'Administrador' : 'Docente';
+  const userId = req.administrador ? req.administrador._id : req.profesor._id;
+  const userType = req.administrador ? 'Administrador' : 'Profesor';
 
   try {
     // Verificar que el usuario (docente o administrador) esté autenticado antes de establecer los rasgos

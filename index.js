@@ -1,5 +1,6 @@
 // Importar librerias
 const express = require('express')
+const cors = require('cors')
 
 // Iniciar Base de datos
 require('./db/mongoose')
@@ -17,6 +18,10 @@ const proyectoEscolar = require("./routers/proyectoEscolar");
 const app = express();
 
 //Configurar Express
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+}))
 app.use(express.json())
 app.use(directorRouter)
 app.use(administratorRouter)
@@ -26,7 +31,7 @@ app.use(informeDescriptivoRouter)
 app.use(rasgosPersonalesRouter)
 app.use(proyectoEscolar)
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Inicio Express
 app.listen(port, () => {

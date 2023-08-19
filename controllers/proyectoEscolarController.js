@@ -4,8 +4,8 @@ const ProyectoEscolar = require('../models/proyectoEscolar');
 // Controlador para registrar el nombre del proyecto escolar por un docente o administrador
 const registrarProyectoEscolar = async (req, res) => {
   const { nombre, lapso } = req.body;
-  const userId = req.administrador ? req.administrador._id : req.docente._id;
-  const userType = req.administrador ? 'Administrador' : 'Docente';
+  const userId = req.administrador ? req.administrador._id : req.profesor._id;
+  const userType = req.administrador ? 'Administrador' : 'Profesor';
 
   try {
     // Verificar que el usuario (docente o administrador) esté autenticado antes de registrar el nombre del proyecto escolar

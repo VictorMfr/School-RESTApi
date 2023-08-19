@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "env-cmd -f ./config/dev.env node index.js",
-    "init-data": "mongodb\\bin\\mongod.exe --dbpath mongodb-data"
+    "dev": "env-cmd -f ./config/dev.env nodemon index.js"
   },
   "keywords": [],
   "author": "",
@@ -14,10 +14,12 @@
   "dependencies": {
     "bcrypt": "^5.1.0",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
     "env-cmd": "^10.1.0",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.3.4",
+    "nodemon": "^3.0.1",
     "validator": "^13.9.0"
   }
 }
