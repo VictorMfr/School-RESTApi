@@ -116,15 +116,14 @@ router.get('/representante/:id_representante', representanteAuth, async (req, re
 router.get("/direccion/estudiantes", async (req, res) => {
   try {
     // Buscar todos los representantes en la base de datos
-    const representantes = await Representant.find();
+    const representantes = await Representante.find();
 
     // Crear un arreglo para almacenar los estudiantes de todos los representantes
     let estudiantes = [];
-
     // Iterar sobre los representantes y obtener los estudiantes de cada uno
     representantes.forEach(representante => {
       representante.hijos_estudiantes.forEach(estudiante => {
-        estudiantes.push(estudiante.hijo_estudiante);
+        estudiantes.push({...estudiante.hijo_estudiante, _id: estudiante._id});
       });
     });
 
