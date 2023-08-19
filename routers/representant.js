@@ -35,7 +35,7 @@ router.post('/representante/nuevoRepresentante', auth, async (req, res) => {
   const representante = new Representante(req.body);
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -84,7 +84,7 @@ router.post('/representante/cerrarSesion', auth, async (req, res) => {
 router.delete('/representante/:id_representante/eliminarRepresentante', auth, async (req, res) => {
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -110,7 +110,7 @@ router.patch('/representante/:id_representante', auth, async (req, res) => {
 
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -150,14 +150,21 @@ router.patch("/representante/:id_representante/nuevoEstudiante", auth, async (re
 
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
+    // Verificar Si el representante existe
+    const representante = await Representante.findById(req.params.id_representante);
+
+    if (!representante) {
+      throw new Error("No existe dicho representante")
+    }
+
     // Añadir los datos del hijo al representante
-    req.representante.hijos_estudiantes.push({ hijo_estudiante: datos_hijo });
-    await req.representante.save();
-    res.send(req.representante);
+    representante.hijos_estudiantes.push({ hijo_estudiante: datos_hijo });
+    await representante.save();
+    res.send(representante);
   } catch (error) {
     console.log(error.message)
     res.status(500).send({ error: error.message });
@@ -185,7 +192,7 @@ router.get('/representante/:id_representante', auth, async (req, res) => {
 // Ver lista de todos los estudiantes: Director y administrador
 router.get("/direccion/estudiantes", async (req, res) => {
   try {
-    if (!req.director || req.administrator) {
+    if (!req.director && req.administrator) {
       throw new Error("Acceso Denegado")
     }
 
@@ -213,7 +220,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSe
 
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -245,7 +252,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarE
 
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -289,7 +296,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirar
 
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -357,7 +364,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/registr
 router.get('/representantes', auth, async (req, res) => {
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
@@ -375,7 +382,7 @@ router.get('/representantes', auth, async (req, res) => {
 router.get('/representantes/:id_representante', auth, async (req, res) => {
   try {
 
-    if (!req.director || !req.administrador) {
+    if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
