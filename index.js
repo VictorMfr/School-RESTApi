@@ -1,5 +1,6 @@
 // Importar librerias
 const express = require('express')
+const cors = require("cors");
 
 // Iniciar Base de datos
 require('./db/mongoose')
@@ -15,12 +16,17 @@ const app = express();
 
 //Configurar Express
 app.use(express.json())
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+}))
+
 app.use(directorRouter) // RUTAS ACTOR DIRECTOR
 app.use(administratorRouter) // RUTAS ACTOR ADMINISTRADOR
 app.use(professorRouter) // RUTAS ACTOR DOCENTE
 app.use(representantRouter) // RUTAS ACTOR REPRESENTANTE
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 // Inicio Express
 app.listen(port, () => {

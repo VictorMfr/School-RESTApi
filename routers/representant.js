@@ -43,7 +43,7 @@ router.post('/representante/nuevoRepresentante', auth, async (req, res) => {
     res.status(201).send({ representante });
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -56,7 +56,7 @@ router.post('/representante/iniciarSesion', async (req, res) => {
     res.send({ representante, token })
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 })
 
@@ -76,7 +76,7 @@ router.post('/representante/cerrarSesion', auth, async (req, res) => {
     res.send()
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 })
 
@@ -92,7 +92,7 @@ router.delete('/representante/:id_representante/eliminarRepresentante', auth, as
     res.send(representante);
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 })
 
@@ -128,7 +128,7 @@ router.patch('/representante/:id_representante', auth, async (req, res) => {
     res.send(req.representante)
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 })
 
@@ -160,7 +160,7 @@ router.patch("/representante/:id_representante/nuevoEstudiante", auth, async (re
     res.send(req.representante);
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -178,14 +178,14 @@ router.get('/representante/:id_representante', auth, async (req, res) => {
 
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
 // Ver lista de todos los estudiantes: Director y administrador
 router.get("/direccion/estudiantes", async (req, res) => {
   try {
-    if (!req.director || req.administrator ) {
+    if (!req.director || req.administrator) {
       throw new Error("Acceso Denegado")
     }
 
@@ -197,20 +197,20 @@ router.get("/direccion/estudiantes", async (req, res) => {
     // Iterar sobre los representantes y obtener los estudiantes de cada uno
     representantes.forEach(representante => {
       representante.hijos_estudiantes.forEach(estudiante => {
-        estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id });
+        estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id });
       });
     });
 
     res.send(estudiantes);
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
 // Mover Seccion estudiante: Director y Administrador
 router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSeccion', auth, async (req, res) => {
-  
+
   try {
 
     if (!req.director || !req.administrador) {
@@ -221,7 +221,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSe
     const representante = await Representante.findOne({ _id: req.params.id_representante });
 
     if (!representante) {
-        throw new Error('El representante no existe');
+      throw new Error('El representante no existe');
     }
 
     const estudianteId = req.params.id_estudiante;
@@ -234,15 +234,15 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSe
     res.send({ message: 'Sección del estudiante actualizada exitosamente' });
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
 // Editar Estudiante
 router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarEstudiante', auth, async (req, res) => {
-  
+
   const estudianteId = req.params.id_estudiante;
-  
+
   try {
 
     if (!req.director || !req.administrador) {
@@ -253,10 +253,10 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarE
     const representante = await Representante.findOne({ _id: req.params.id_representante });
 
     if (!representante) {
-        throw new Error('El representante no existe');
+      throw new Error('El representante no existe');
     }
-    
-    
+
+
 
     // Buscar el estudiante dentro de la lista hijos_estudiantes del representante
     const estudiante = representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId);
@@ -278,15 +278,15 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarE
     res.send({ message: 'Datos del estudiante actualizados exitosamente' });
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
 // Retirar Seccion Estudiante
 router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirarSeccion', auth, async (req, res) => {
-  
+
   const estudianteId = req.params.id_estudiante;
-  
+
   try {
 
     if (!req.director || !req.administrador) {
@@ -297,9 +297,9 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirar
     const representante = await Representante.findOne({ _id: req.params.id_representante });
 
     if (!representante) {
-        throw new Error('El representante no existe');
+      throw new Error('El representante no existe');
     }
-    
+
 
     // Buscar el estudiante dentro de la lista hijos_estudiantes del representante
     const estudiante = representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId);
@@ -317,7 +317,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirar
     res.send({ message: 'Sección del estudiante retirada exitosamente' });
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -349,7 +349,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/registr
     res.send({ message: 'Literal calificativo final registrado exitosamente' });
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -367,7 +367,7 @@ router.get('/representantes', auth, async (req, res) => {
     res.send(representantes);
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
@@ -389,7 +389,7 @@ router.get('/representantes/:id_representante', auth, async (req, res) => {
     res.send(representante);
   } catch (error) {
     console.log(error.message)
-    res.status(500).send({error: error.message});
+    res.status(500).send({ error: error.message });
   }
 });
 
