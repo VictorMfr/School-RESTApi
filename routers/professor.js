@@ -86,8 +86,8 @@ router.post('/docente/cerrarSesion', auth, async (req, res) => {
             throw new Error("Acceso Denegado")
         }
 
-        req.profesor.tokens = req.profesor.tokens.filter((token) => token.token !== req.token);
-        await req.profesor.save();
+        req.professor.tokens = req.professor.tokens.filter((token) => token.token !== req.token);
+        await req.professor.save();
 
         res.send();
     } catch (error) {
