@@ -120,7 +120,6 @@ router.get("/direccion/estudiantes", async (req, res) => {
 
     // Crear un arreglo para almacenar los estudiantes de todos los representantes
     let estudiantes = [];
-
     // Iterar sobre los representantes y obtener los estudiantes de cada uno
     representantes.forEach(representante => {
       representante.hijos_estudiantes.forEach((estudiante, i) => {
