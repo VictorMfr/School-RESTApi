@@ -15,10 +15,6 @@ const representantRouter = require("./routers/representant");
 const app = express();
 
 //Configurar Express
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true,
-}))
 app.use(express.json())
 app.use(cors({
     origin: "http://localhost:3000",
