@@ -1,26 +1,50 @@
 const express = require('express');
 const Administrator = require('../models/administrator');
-const directorAuth = require('../middleware/directorAuth');
-const administratorAuth = require('../middleware/administratorAuth');
+const auth = require("../middleware/auth");
 const router = new express.Router();
 
+/*
+ESTAS SON LAS RUTAS RELACIONADAS CON EL ADMINISTRADOR:
+
+- CREAR ADMIN
+- BORRAR ADMIN
+- INICIAR SESIÓN ADMIN
+- CERRAR SESIÓN ADMIN
+- VER LISTA ADMIN
+- VER UN SOLO ADMIN
+- HABILITAR ADMIN
+- DESHABILITAR ADMIN
+
+*/
+
 // Registrar administrador: Director
-router.post('/direccion/administracion/registrarAdministrador', directorAuth, async (req, res) => {
+router.post('/direccion/administracion/registrarAdministrador', auth, async (req, res) => {
     const administrador = new Administrator({
         ...req.body
     });
 
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         await administrador.save();
         res.status(201).send({ username: administrador.name, password: administrador.password });
-    } catch (e) {
-        res.status(400).send(e);
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
 // Eliminar administrador: Director
-router.delete('/direccion/administracion/:id_administrador/eliminarAdministrador', directorAuth, async (req, res) => {
+router.delete('/direccion/administracion/:id_administrador/eliminarAdministrador', auth, async (req, res) => {
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         const administrador = await Administrator.findOneAndDelete({ _id: req.params.id_administrador });
 
         if (!administrador) {
@@ -28,8 +52,9 @@ router.delete('/direccion/administracion/:id_administrador/eliminarAdministrador
         }
 
         res.send(administrador);
-    } catch (e) {
-        res.status(500).send();
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
@@ -39,39 +64,56 @@ router.post('/administracion/iniciarSesion', async (req, res) => {
         const administrador = await Administrator.findByCredentials(req.body.email, req.body.password);
         const token = await administrador.generateAuthToken();
         res.send({ administrador, token });
-    } catch (e) {
-        res.status(400).send();
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
 // Cerrar sesion administrador
-router.post('/administracion/cerrarSesion', administratorAuth, async (req, res) => {
+router.post('/administracion/cerrarSesion', auth, async (req, res) => {
     try {
+
+        if (!req.administrador) {
+            throw new Error("Acceso Denegado")
+        }
+
         req.administrador.tokens = req.administrador.tokens.filter((token) => token.token !== req.token);
         await req.administrador.save();
 
         res.send();
-    } catch (e) {
-        res.status(500).send();
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
-// Ver Lista de Administradores
-router.get('/administracion', directorAuth, async (req, res) => {
+// Ver Lista de Administradores: Director
+router.get('/administracion', auth, async (req, res) => {
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         // Buscar todos los administradores en la base de datos
         const administradores = await Administrator.find();
-
+        console.log("hey")
         res.send(administradores);
     } catch (error) {
-        console.log(error);
-        res.status(500).send({ error: 'Error al obtener la lista de administradores' });
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
-// Ver Administrador
-router.get('/administracion/:id_administrador', directorAuth, async (req, res) => {
+// Ver Administrador: Director
+router.get('/administracion/:id_administrador', auth, async (req, res) => {
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         // Buscar administrador en la base de datos por ID
         const administrador = await Administrator.findById(req.params.id_administrador);
 
@@ -81,15 +123,19 @@ router.get('/administracion/:id_administrador', directorAuth, async (req, res) =
 
         res.send(administrador);
     } catch (error) {
-        console.log(error);
-        res.status(500).send({ error: 'Error al obtener el administrador' });
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
 // Habilitar/deshabilitar administrador: Director
-
-router.patch('/direccion/:id_administrador/habilitarAdministrador', directorAuth, async (req, res) => {
+router.patch('/direccion/:id_administrador/habilitarAdministrador', auth, async (req, res) => {
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         const administrador = await Administrator.findByIdAndUpdate(
             req.params.id_administrador,
             { habilitado: true },
@@ -101,13 +147,19 @@ router.patch('/direccion/:id_administrador/habilitarAdministrador', directorAuth
         }
 
         res.send(administrador);
-    } catch (e) {
-        res.status(500).send();
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
-router.patch('/direccion/:id_administrador/deshabilitarAdministrador', directorAuth, async (req, res) => {
+router.patch('/direccion/:id_administrador/deshabilitarAdministrador', auth, async (req, res) => {
     try {
+
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
         const administrador = await Administrator.findByIdAndUpdate(
             req.params.id_administrador,
             { habilitado: false },
@@ -119,8 +171,9 @@ router.patch('/direccion/:id_administrador/deshabilitarAdministrador', directorA
         }
 
         res.send(administrador);
-    } catch (e) {
-        res.status(500).send();
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({error: error.message});
     }
 });
 
