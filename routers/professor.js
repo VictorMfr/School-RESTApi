@@ -33,7 +33,7 @@ router.post('/docente/registrarDocente', auth, async (req, res) => {
     const profesor = new Profesor(req.body);
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -49,7 +49,7 @@ router.post('/docente/registrarDocente', auth, async (req, res) => {
 router.delete('/docente/:id_docente/eliminarDocente', auth, async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -86,8 +86,8 @@ router.post('/docente/cerrarSesion', auth, async (req, res) => {
             throw new Error("Acceso Denegado")
         }
 
-        req.profesor.tokens = req.profesor.tokens.filter((token) => token.token !== req.token);
-        await req.profesor.save();
+        req.professor.tokens = req.professor.tokens.filter((token) => token.token !== req.token);
+        await req.professor.save();
 
         res.send();
     } catch (error) {
@@ -100,7 +100,7 @@ router.post('/docente/cerrarSesion', auth, async (req, res) => {
 router.patch('/docente/:id_docente/habilitarDocente', auth, async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -125,7 +125,7 @@ router.patch('/docente/:id_docente/habilitarDocente', auth, async (req, res) => 
 router.patch('/docente/:id_docente/deshabilitarDocente', auth, async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -150,7 +150,7 @@ router.patch('/docente/:id_docente/deshabilitarDocente', auth, async (req, res) 
 router.patch('/docente/:id_docente/retirarSeccion', async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -175,7 +175,7 @@ router.patch('/docente/:id_docente/retirarSeccion', async (req, res) => {
 router.patch('/docente/:id_docente/asignarSeccion', async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -200,7 +200,7 @@ router.patch('/docente/:id_docente/asignarSeccion', async (req, res) => {
 router.get('/docentes', auth, async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -216,7 +216,7 @@ router.get('/docentes', auth, async (req, res) => {
 router.get('/docentes/:id_docente', auth, async (req, res) => {
     try {
 
-        if (!req.director || !req.administrador) {
+        if (!req.director && !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
@@ -237,7 +237,7 @@ router.get('/profesor/estudiantes', auth, async (req, res) => {
     }
 
     // Buscar todos los estudiantes que pertenecen a la misma sección que el profesor
-    const lista_estudiantes = await Representante.find({"hijos_estudiantes.hijo_estudiante.seccion": req.profesor.section});
+    const lista_estudiantes = await Representante.find({"hijos_estudiantes.hijo_estudiante.seccion": req.professor.section});
 
         let lista = [];
 
