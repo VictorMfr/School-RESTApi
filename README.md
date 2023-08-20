@@ -77,7 +77,3 @@ Constancia de estudios: get /estudiante/:estudiante/constanciaDeEstudios
 Boletin: get /estudiante/:estudiante/boletin
 
 Informe descriptivo: get /estudiante/:estudiante/informeDescriptivo
-
-
-
-
