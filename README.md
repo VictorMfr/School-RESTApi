@@ -1,6 +1,6 @@
 # Rutas
 
-DIRECTOR
+## DIRECTOR
 
 Registrar director: post /direccion/nuevoDirector
 
@@ -22,7 +22,7 @@ Iniciar sesion administrador: /administracion/iniciarSesion
 
 Cerrar sesion administrador: /administrador/cerrarSesion
 
-GESTIONAR DOCENTES: Solo para director y administrador
+## GESTIONAR DOCENTES: Solo para director y administrador
 
 Iniciar sesion docente: /docente/iniciarSesion
 
@@ -46,8 +46,7 @@ Eliminar representante delete /representante/:representante
 
 Editar Información representante: patch /representante/:representante
 
-
-GESTIONAR ESTUDIANTES: Solo director y administrador
+## GESTIONAR ESTUDIANTES: Solo director y administrador
 
 (Estudiante es un atributo de Representante)
 
@@ -61,7 +60,7 @@ Retirar seccion estudiante: delete /representante/:representante/estudiante/:est
 
 Registro estudiantil: patch /representante/:representante/estudiante/:estudiante/registroEstudiantil
 
-EVALUAR DESEMPEÑO ESTUDIANTIL: Solo docente
+## EVALUAR DESEMPEÑO ESTUDIANTIL: Solo docente
 
 Cargar informe descriptivo: patch /estudiante/:estudiante/cargarInforme 
 
@@ -71,7 +70,7 @@ Registrar calificativo final: patch /estudiante/:estudiante/registrarCalificativ
 
 (Registrar nombre del proyecto escolar: patch /estudiante/:estudiante/registrarCalificativoFinal)
 
-VISUALIZAR DESEMPEÑO DE ESTUDIANTES: Todos
+## VISUALIZAR DESEMPEÑO DE ESTUDIANTES: Todos
 
 Constancia de estudios: get /estudiante/:estudiante/constanciaDeEstudios
 
