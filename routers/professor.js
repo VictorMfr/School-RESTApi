@@ -291,9 +291,10 @@ router.post('/informeDescriptivo/cargarInforme', auth, async (req, res) => {
 // Establecer rasgos personales
 router.post('/rasgosPersonales/establecerRasgos', auth, async (req, res) => {
     const { lapso, rasgos } = req.body;
-    const userId = req.administrador ? req.administrador._id : req.docente._id;
+    const userId = req.administrador ? req.administrador._id : req.professor._id;
     const userType = req.administrador ? 'Administrador' : 'Docente';
   
+
     try {
 
         if (!req.professor) {
@@ -325,33 +326,19 @@ router.post('/rasgosPersonales/establecerRasgos', auth, async (req, res) => {
 
 // Registrar nombre del proyecto escolar: Docente y Administrador
 router.post('/proyectoEscolar/registrarProyecto', auth, async (req, res) => {
+    // Verificar validez de la recepción de los datos
     const { nombre, lapso } = req.body;
-    const userId = req.administrador ? req.administrador._id : req.docente._id;
-    const userType = req.administrador ? 'Administrador' : 'Docente';
   
     try {
-
+        // Verificar que el usuario (docente o administrador) esté autenticado antes de registrar el nombre del proyecto escolar
         if (!req.professor || !req.administrador) {
             throw new Error("Acceso Denegado")
         }
 
+        
 
-      // Verificar que el usuario (docente o administrador) esté autenticado antes de registrar el nombre del proyecto escolar
-      if (!userId) {
-        throw new Error(`${userType} no autenticado`);
-      }
-  
-      // Crear el registro del proyecto escolar
-      const proyectoEscolar = new ProyectoEscolar({
-        docente: userId,
-        nombre,
-        lapso
-      });
-  
-      // Guardar el nombre del proyecto escolar en la base de datos
-      await proyectoEscolar.save();
-  
-      res.status(201).send({ proyectoEscolar });
+      
+      
     } catch (error) {
         console.log(error.message)
         res.status(500).send({error: error.message});

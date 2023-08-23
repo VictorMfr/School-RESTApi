@@ -1,5 +1,6 @@
 const express = require('express')
 const Director = require('../models/director')
+const Periodo = require("../models/period")
 const auth = require("../middleware/auth")
 const router = new express.Router()
 
@@ -63,6 +64,31 @@ router.delete('/direccion/eliminarDirector', auth, async (req, res) => {
         console.log(error.message)
         res.status(400).send({error: error.message});
     }
+});
+
+// Registrar nuevo Periodo Escolar
+router.post("/direccion/nuevoPeriodoEscolar", auth, async (req, res) => {
+    // Tomando los datos
+    const Periodo = req.body.periodo;
+    const fechaInicio = req.body.fechaInicio;
+    const fechaCulminacion = req.body.fechaCulminacion;
+
+    try {
+        // Verificar si se trata del director
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+
+        // Creando el Periodo
+        const periodo = await new Periodo({Periodo, fechaInicio, fechaCulminacion})
+        await periodo.save()
+        
+        res.send(periodo)
+    } catch (error) {
+        console.log(error);
+        res.status(500).send(error.message);
+    }
+    
 });
 
 module.exports = router;
