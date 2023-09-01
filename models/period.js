@@ -1,23 +1,69 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 // Sub-schema para la lista de estudiantes
 const studentSchema = new mongoose.Schema({
+  // Nombre del Estudiante
   nombre: {
     type: String,
     required: true
   },
+
+  // Apellido del estudiante
   apellido: {
     type: String,
     required: true
   },
-  rasgosPersonales: [String]
+
+  // Cedula del estudiante
+  cedula_escolar: {
+    type: String,
+    required: true
+  },
+
+  // Informe Descriptivo del estudiante al final del lapso
+  informe_descriptivo: {
+    type: String,
+  },
+
+  // Literal calificativo al final del lapso
+  literal_calificativo_final: {
+    type: String,
+  },
+
+  // Rasgos personales al final del lapso
+  rasgos: {
+    creativo: {
+      type: Boolean,
+      default: false,
+    },
+    responsable: {
+      type: Boolean,
+      default: false,
+    },
+    colaborador: {
+      type: Boolean,
+      default: false,
+    },
+    // ... Agrega más rasgos aquí si es necesario
+  }
 });
 
 // Sub-schema para la sección
 const sectionSchema = new mongoose.Schema({
-  nombre: {
+  seccion: {
     type: String,
     required: true
+  },
+  docente: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    validate(value) {
+      if (!validator.isEmail(value)) {
+        throw new Error('Invalid email');
+      }
+    }
   },
   estudiantes: [studentSchema]  // Lista de estudiantes en la sección
 });
@@ -36,9 +82,8 @@ const lapsoSchema = new mongoose.Schema({
   lapso: {
     type: Number,
     required: true,
-    unique: true
   },
-  ProyectoEscolar: {
+  proyectoEscolar: {
     type: String,
     required: true
   },
@@ -47,7 +92,7 @@ const lapsoSchema = new mongoose.Schema({
 
 // Schema para los periodos
 const periodSchema = new mongoose.Schema({
-  Periodo: {
+  periodo: {
     type: String,
     required: true
   },
@@ -55,7 +100,7 @@ const periodSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  fechaCulminación: {
+  fechaCulminacion: {
     type: String,
     required: true
   },
@@ -64,62 +109,3 @@ const periodSchema = new mongoose.Schema({
 
 const Periodo = mongoose.model('Periodo', periodSchema);
 module.exports = Periodo;
-
-/*
-  Ejemplo Entregable
-  
-  [{
-    Periodo: 2019-2020
-    lapsos: {
-      Uno: {
-        grados: {
-          Primero: {
-            Secciones: {
-              A: {
-                Estudiantes: [{
-                  nombre: Víctor,
-                  apellido: Martínez,
-                  Calificativo: A,
-                  Rasgos Personales: {
-                    Disciplina: Si,
-                    Respeto: No,
-                    Atento: No,
-                    Violento: No,
-                  }
-
-
-                }]
-              },
-              B: {
-
-              },
-              C: {
-
-              }
-            }
-          },
-          Segundo: {
-            ...
-          },
-          Tercero: {
-            ...
-          },
-          Cuarto: {
-            ...
-          }
-        }
-      } 
-      Dos: {...} 
-      Tres: {...}
-    }
-  },
-  ...
-  ]
-
-
-  Hay infinitos Periodos
-  Hay infinitos Lapsos
-  Hay infinitos Grados
-  Hay infinitos Secciones
-  Hay infinitos Estudiantes
-*/

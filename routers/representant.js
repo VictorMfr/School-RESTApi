@@ -1,37 +1,20 @@
+// Importando Librerias
 const express = require('express');
+const {handleError, serverRoutes} = require('../utils/utils');
+
+// Importando modelos
 const Representante = require('../models/representant');
+
+// Importando Middlewares
 const auth = require("../middleware/auth");
+
+// Inicializando Router
 const router = new express.Router();
 
-/*
-ESTAS SON LAS RUTAS RELACIONADAS CON EL REPRESENTANTE:
-
-RUTAS BÁSICAS:
-
-- CREAR REPRESENTANTE
-- BORRAR REPRESENTANTE
-- EDITAR INFORMACIÓN DEL REPRESENTANTE
-- VER REPRESENTANTE ESPECÍFICO
-- INICIAR SESIÓN REPRESENTANTE
-- CERRAR SESIÓN REPRESENTANTE
-
-
-ESPECÍFICOS:
-
-- AÑADIR ESTUDIANTE
-- VER LISTA DE ESTUDIANTES DEL REPRESENTANTE
-- VER LISTA DE TODOS LOS ESTUDIANTES DE LA ESCUELA
-- MOVER SECCIÓN ESTUDIANTE
-- EDITAR INFORMACIÓN ESTUDIANTE
-- RETIRAR SECCIÓN ESTUDIANTE
-- REGISTRAR CALIFICATIVO FINAL ESTUDIANTE
-- VER LISTA DE REPRESENTANTES
-
-*/
 
 
 // Registro de representante: Director y Administrador
-router.post('/representante/nuevoRepresentante', auth, async (req, res) => {
+router.post(serverRoutes.representant.newRepresentant, auth, async (req, res) => {
   const representante = new Representante(req.body);
   try {
 
@@ -48,7 +31,7 @@ router.post('/representante/nuevoRepresentante', auth, async (req, res) => {
 });
 
 // Inicio de sesion de representante
-router.post('/representante/iniciarSesion', async (req, res) => {
+router.post(serverRoutes.representant.login, async (req, res) => {
   try {
 
     const representante = await Representante.findByCredentials(req.body.email, req.body.password)
@@ -61,27 +44,28 @@ router.post('/representante/iniciarSesion', async (req, res) => {
 })
 
 // Cerrar sesion representante
-router.post('/representante/cerrarSesion', auth, async (req, res) => {
+router.post(serverRoutes.representant.logout, auth, async (req, res) => {
   try {
 
-    if (!req.representant) {
+    if (!req.representante) {
       throw new Error("Acceso Denegado")
     }
 
     req.representante.tokens = req.representante.tokens.filter((token) => {
       return token.token !== req.token
     })
+
     await req.representante.save()
 
     res.send()
   } catch (error) {
-    console.log(error.message)
+    console.log(error)
     res.status(500).send({ error: error.message });
   }
 })
 
 // Borrar Representante: Director y Administrador
-router.delete('/representante/:id_representante/eliminarRepresentante', auth, async (req, res) => {
+router.delete(serverRoutes.representant.deleteRepresentant, auth, async (req, res) => {
   try {
 
     if (!req.director && !req.administrador) {
@@ -97,7 +81,7 @@ router.delete('/representante/:id_representante/eliminarRepresentante', auth, as
 })
 
 // Editar informacion representante: Director y Administrador
-router.patch('/representante/:id_representante', auth, async (req, res) => {
+router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) => {
 
   // Verificar si los campos del body son válidos
   const updates = Object.keys(req.body)
@@ -133,32 +117,44 @@ router.patch('/representante/:id_representante', auth, async (req, res) => {
 })
 
 // Añadir Estudiante
-router.patch("/representante/:id_representante/nuevoEstudiante", auth, async (req, res) => {
+router.patch(serverRoutes.representant.student.addStudent, auth, async (req, res) => {
   // Extrayendo datos de la petición
   const datos_hijo = {
     nombres: req.body.nombres,
     apellidos: req.body.apellidos,
     fecha_de_nacimiento: req.body.fecha_de_nacimiento,
     edad: req.body.edad,
-    grado: req.body.grado,
-    seccion: req.body.seccion,
     direccion: req.body.direccion,
-    docente: req.body.docente,
     cedula_escolar: req.body.cedula_escolar,
-    año_escolar: req.body.año_escolar
+    año_escolar: req.body.año_escolar,
   };
 
   try {
 
+    // Verificar si es Director
     if (!req.director && !req.administrador) {
       throw new Error("Acceso Denegado")
     }
 
-    // Verificar Si el representante existe
+    // Verificar si el representante existe
     const representante = await Representante.findById(req.params.id_representante);
 
     if (!representante) {
       throw new Error("No existe dicho representante")
+    }
+
+    // Verificar si la cedula escolar ya existe
+    const representantes = await Representante.find();
+    let estudiantes = [];
+    
+    representantes.forEach(representante => {
+      representante.hijos_estudiantes.forEach(estudiante => {
+        estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id });
+      });
+    });
+
+    if (estudiantes.find(est => est.cedula_escolar === datos_hijo.cedula_escolar)) {
+      throw new Error("La cedula escolar debe ser unica")
     }
 
     // Añadir los datos del hijo al representante
@@ -166,16 +162,16 @@ router.patch("/representante/:id_representante/nuevoEstudiante", auth, async (re
     await representante.save();
     res.send(representante);
   } catch (error) {
-    console.log(error.message)
+    console.log(error)
     res.status(500).send({ error: error.message });
   }
 });
 
 // Ver lista de Estudiantes del representante: Representante
-router.get('/representante/:id_representante', auth, async (req, res) => {
+router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res) => {
   try {
 
-    if (!req.representant) {
+    if (!req.representante) {
       throw new Error("Acceso Denegado")
     }
 
@@ -190,7 +186,7 @@ router.get('/representante/:id_representante', auth, async (req, res) => {
 });
 
 // Ver lista de todos los estudiantes: Director y administrador
-router.get("/direccion/estudiantes", async (req, res) => {
+router.get(serverRoutes.representant.student.seeAllStudents, async (req, res) => {
   try {
     if (!req.director && req.administrator) {
       throw new Error("Acceso Denegado")
@@ -216,7 +212,7 @@ router.get("/direccion/estudiantes", async (req, res) => {
 });
 
 // Mover Seccion estudiante: Director y Administrador
-router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSeccion', auth, async (req, res) => {
+router.patch(serverRoutes.representant.student.transferSectionStudent, auth, async (req, res) => {
 
   try {
 
@@ -246,7 +242,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/moverSe
 });
 
 // Editar Estudiante
-router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarEstudiante', auth, async (req, res) => {
+router.patch(serverRoutes.representant.student.editStudent, auth, async (req, res) => {
 
   const estudianteId = req.params.id_estudiante;
 
@@ -290,7 +286,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/editarE
 });
 
 // Retirar Seccion Estudiante
-router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirarSeccion', auth, async (req, res) => {
+router.patch(serverRoutes.representant.student.removeSection, auth, async (req, res) => {
 
   const estudianteId = req.params.id_estudiante;
 
@@ -329,7 +325,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/retirar
 });
 
 // Registrar Literal Calificativo Final: Docente
-router.patch('/representante/:id_representante/estudiante/:id_estudiante/registrarLiteralFinal', auth, async (req, res) => {
+router.patch(serverRoutes.representant.student.addFinalNote, auth, async (req, res) => {
   try {
 
     if (!req.professor) {
@@ -361,7 +357,7 @@ router.patch('/representante/:id_representante/estudiante/:id_estudiante/registr
 });
 
 // Ver lista de representantes: Director y Administrador
-router.get('/representantes', auth, async (req, res) => {
+router.get(serverRoutes.representant.seeRepresentants, auth, async (req, res) => {
   try {
 
     if (!req.director && !req.administrador) {

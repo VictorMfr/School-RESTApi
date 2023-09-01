@@ -42,16 +42,26 @@ const professorSchema = new mongoose.Schema({
             required: true
         }
     }],
-    section: {
-        type: String,
-        required: false,
-        lowercase: true
-    },
     habilitado: {
         required: false,
         type: Boolean
-    }
-})
+    },
+
+    clases_asignadas: [{
+        grado: {
+            type: Number,
+            required: true
+        },
+        seccion: {
+            type: String,
+            required: false,
+            lowercase: true
+        }
+    }]
+        
+    
+    
+});
 
 professorSchema.methods.toJSON = function () {
     const user = this

@@ -58,11 +58,9 @@ const representantSchema = new mongoose.Schema({
             },
             grado: {
                 type: String,
-                required: true
             },
             seccion: {
                 type: String,
-                required: true
             },
             direccion: {
                 type: String,
@@ -70,23 +68,15 @@ const representantSchema = new mongoose.Schema({
             },
             docente: {
                 type: String,
-                required: true
             },
             cedula_escolar: {
                 type: String,
-                required: true
+                required: true,
+                unique: true
             },
             año_escolar: {
                 type: String,
                 required: true
-            },
-            informe_descriptivo: {
-                type: String,
-                required: false
-            },
-            literal_calificativo_final: {
-                type: String,
-                required: false
             }
         }
     }]

@@ -1,35 +1,19 @@
+// Importando Librerias
 const express = require('express');
+const {handleError, serverRoutes} = require('../utils/utils')
+
+// Importando modelos
 const Profesor = require('../models/professor');
 const Representante = require("../models/representant");
-const InformeDescriptivo = require('../models/informeDescriptivo');
-const ProyectoEscolar = require('../models/proyectoEscolar');
+
+// Importando Middlewares
 const auth = require("../middleware/auth");
+
+// Creando el router
 const router = new express.Router();
 
-/*
-ESTAS SON LAS RUTAS RELACIONADAS CON EL DOCENTE:
-
-- REGISTRAR DOCENTE
-- BORRAR DOCENTE
-- INICIO SESIÓN DOCENTE
-- CERRAR SESIÓN DOCENTE
-- HABILITAR DOCENTE
-- DESHABILITAR DOCENTE
-- ASIGNAR SECCIÓN DOCENTE
-- RETIRAR SECCIÓN DOCENTE
-- VER LISTA DE DOCENTES
-- VER DOCENTE ESPECIFICO
-- VER ESTUDIANTES PERTENECIENTES AL DOCENTE
-- CARGAR INFORME DESCRIPTIVO
-- CARGAR RASGOS PERSONALES
-- REGISTRAR NOMBRE DEL PROYECTO ESCOLAR
-*/
-
-
-
-
 // Registrar docente: Director y Administrador
-router.post('/docente/registrarDocente', auth, async (req, res) => {
+router.post(serverRoutes.professor.newProfessor, auth, async (req, res) => {
     const profesor = new Profesor(req.body);
     try {
 
@@ -38,15 +22,14 @@ router.post('/docente/registrarDocente', auth, async (req, res) => {
         }
 
         await profesor.save();
-        res.status(201).send({ profesor });
+        res.status(201).send(profesor);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Borrar docente: Director y Administrador
-router.delete('/docente/:id_docente/eliminarDocente', auth, async (req, res) => {
+router.delete(serverRoutes.professor.deleteProfessor, auth, async (req, res) => {
     try {
 
         if (!req.director && !req.administrador) {
@@ -61,25 +44,23 @@ router.delete('/docente/:id_docente/eliminarDocente', auth, async (req, res) => 
 
         res.send(profesor);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Inicio de sesión de docente
-router.post('/docente/iniciarSesion', async (req, res) => {
+router.post(serverRoutes.professor.login, async (req, res) => {
     try {
         const profesor = await Profesor.findByCredentials(req.body.email, req.body.password);
         const token = await profesor.generateAuthToken();
         res.send({ profesor, token });
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Cerrar sesión docente
-router.post('/docente/cerrarSesion', auth, async (req, res) => {
+router.post(serverRoutes.professor.logout, auth, async (req, res) => {
     try {
 
         if (!req.professor) {
@@ -91,13 +72,12 @@ router.post('/docente/cerrarSesion', auth, async (req, res) => {
 
         res.send();
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Habilitar Docente: Director Administrador
-router.patch('/docente/:id_docente/habilitarDocente', auth, async (req, res) => {
+router.patch(serverRoutes.professor.enableProfessor, auth, async (req, res) => {
     try {
 
         if (!req.director && !req.administrador) {
@@ -116,13 +96,12 @@ router.patch('/docente/:id_docente/habilitarDocente', auth, async (req, res) => 
 
         res.send(profesor);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Deshabilitar Docente: Director y Administrador
-router.patch('/docente/:id_docente/deshabilitarDocente', auth, async (req, res) => {
+router.patch(serverRoutes.professor.disableProfessor, auth, async (req, res) => {
     try {
 
         if (!req.director && !req.administrador) {
@@ -141,63 +120,12 @@ router.patch('/docente/:id_docente/deshabilitarDocente', auth, async (req, res) 
 
         res.send(profesor);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
-    }
-});
-
-// Retirar Sección Docente: Director y Administrador
-router.patch('/docente/:id_docente/retirarSeccion', async (req, res) => {
-    try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
-
-        const profesor = await Profesor.findOneAndUpdate(
-            { _id: req.params.id_docente },
-            { section: null },
-            { new: true } // Devolver el objeto actualizado en la respuesta
-        );
-
-        if (!profesor) {
-            return res.status(404).send();
-        }
-
-        res.send(profesor);
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
-    }
-});
-
-// Asignar Sección Docente: Director y Administrador
-router.patch('/docente/:id_docente/asignarSeccion', async (req, res) => {
-    try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
-
-        const profesor = await Profesor.findOneAndUpdate(
-            { _id: req.params.id_docente },
-            { section: req.body.section },
-            { new: true } // Devolver el objeto actualizado en la respuesta
-        );
-
-        if (!profesor) {
-            return res.status(404).send();
-        }
-
-        res.send(profesor);
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Ver lista de Docentes: Director y Administrador
-router.get('/docentes', auth, async (req, res) => {
+router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
     try {
 
         if (!req.director && !req.administrador) {
@@ -207,13 +135,12 @@ router.get('/docentes', auth, async (req, res) => {
         const profesores = await Profesor.find();
         res.send(profesores);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
 // Ver Docente: Director y Administrador
-router.get('/docentes/:id_docente', auth, async (req, res) => {
+router.get(serverRoutes.professor.seeProfessor, auth, async (req, res) => {
     try {
 
         if (!req.director && !req.administrador) {
@@ -223,129 +150,267 @@ router.get('/docentes/:id_docente', auth, async (req, res) => {
         const profesor = await Profesor.findById(req.params.id_docente);
         res.send(profesor);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
+
+// Retirar clase Docente: Director y Administrador
+router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, res) => {
+    try {
+        const lapso = req.lapso;
+
+        // Verificar si es Director o Administrador
+        if (!req.director && !req.administrador) {
+            throw new Error("Acceso Denegado");
+        }
+
+        // Saber a qué clase se refiere para eliminar
+        const clasePorEliminar = req.params.id_clase;
+
+        // Buscar el profesor, actualizar la lista
+        const profesor = await Profesor.findById(req.params.id_docente);
+
+        // Verificar si el profesor existe
+        if (!profesor) {
+            throw new Error("El profesor no está registrado");
+        }
+
+        // Haciendose de identificadores claves para encontrar la clase del profesor en el periodo
+        const claseAEliminarPeriodo = profesor.clases_asignadas.find(cls => cls._id.toString() === clasePorEliminar);
+        const gradoABuscar = claseAEliminarPeriodo.grado;
+        const seccionABuscar = claseAEliminarPeriodo.seccion;
+
+        // Actualizar la lista
+        profesor.clases_asignadas = profesor.clases_asignadas.filter(clase => clase._id.toString() !== clasePorEliminar);
+
+
+        // Hacer consistencia en el Periodo
+
+        // Buscar el grado correspondiente en el periodo
+        const gradoEnPeriodo = lapso.grados.find(grad => grad.grado === gradoABuscar);
+
+        // Buscar la seccion correspondiente en el grado
+        const seccionEnPeriodo = gradoEnPeriodo.secciones.find(sec => sec.seccion.toLowerCase() === seccionABuscar);
+
+        // Quitar Profesor de la Seccion
+        seccionEnPeriodo.docente = undefined; 
+
+        // Guardar Cambios
+        await req.periodo.save();
+        await profesor.save();
+
+    
+
+        res.send(profesor);
+    } catch (error) {
+        handleError(error, res)
+    }
+});
+
+// Asignar Clase Docente: Director y Administrador
+router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res) => {
+    try {
+        if (!req.director && !req.administrador) {
+            throw new Error("Acceso Denegado")
+        }
+
+        // Comprobar si el profesor está en la base de datos
+        const profesor = await Profesor.findById(req.params.id_docente)
+
+        if (!profesor) {
+            return res.status(404).send("Profesor no encontrado");
+        }
+
+        // Buscar el periodo y lapso actuales
+        const periodo = req.periodo;
+        const lapso = req.lapso
+
+        let isSectionGradeExist = false;
+
+        // Buscar si coincide el grado y seccion
+        lapso.grados.forEach(element => {
+            if (element.grado == req.body.grado) {
+                // Existe el grado; Comprobar si está la seccion
+                element.secciones.forEach(e => {
+                    if (e.seccion == req.body.seccion) {
+                        isSectionGradeExist = true;
+                    }
+                })
+            }
+        });
+
+        if (!isSectionGradeExist) {
+            throw new Error("No existe dicho grado o seccion en este Periodo")
+        }
+
+        // Coincide el grado y seccion
+
+        // Verificar si otro profesor ya ocupó ese espacio
+        const seccion = lapso.grados[req.body.grado - 1].secciones.find(element => element.seccion == req.body.seccion);
+
+        if (seccion.docente) {
+            throw new Error("Dicho espacio de clase ya está ocupado")
+        }
+
+        // El espacio está libre
+
+        // Asignar la clase en profesor y guardar
+        profesor.clases_asignadas = [...profesor.clases_asignadas, { grado: req.body.grado, seccion: req.body.seccion }];
+        await profesor.save();
+
+        // Asignar docente en seccion en periodo y guardar
+        seccion.docente = profesor.email;
+        await periodo.save();
+
+        // Actualizar el campo "docente" en los documentos de los representantes
+        const representantes = await Representante.find();
+        for (const representante of representantes) {
+            for (const estudiante of representante.hijos_estudiantes) {
+                if (
+                    estudiante.hijo_estudiante.grado === req.body.grado &&
+                    estudiante.hijo_estudiante.seccion === req.body.seccion
+                ) {
+                    estudiante.hijo_estudiante.docente = profesor.email;
+                }
+            }
+            await representante.save();
+        }
+
+        res.send(seccion);
+    } catch (error) {
+        handleError(error, res)
+    }
+});
+
+
+
+
+
+
+
+
+
+
 
 // Ver estudiantes del profesor
-router.get('/profesor/estudiantes', auth, async (req, res) => {
-  try {
-
-    if (!req.professor) {
-        throw new Error("Acceso Denegado")
-    }
-
-    // Buscar todos los estudiantes que pertenecen a la misma sección que el profesor
-    const lista_estudiantes = await Representante.find({"hijos_estudiantes.hijo_estudiante.seccion": req.professor.section});
-
-    let lista = [];
-
-    lista_estudiantes.forEach(representante => {
-        representante.hijos_estudiantes.forEach(estudiante => {
-          lista.push(estudiante.hijo_estudiante);
-        });
-    });
-
-    res.send(lista);
-  } catch (error) {
-    console.log(error.message)
-    res.status(500).send({error: error.message});
-  }
-});
-
-// Cargar informe descriptivo
-router.post('/informeDescriptivo/cargarInforme', auth, async (req, res) => {
-    const { lapso, descripcion } = req.body;
-    const docenteId = req.docente._id;
-  
+router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) => {
     try {
 
         if (!req.professor) {
             throw new Error("Acceso Denegado")
         }
 
+        // Buscar todos los estudiantes que pertenecen al mismo grado y seccion que el profesor 5A 6B 7C
+        const lista_estudiantes = await Representante.find({ "hijos_estudiantes.hijo_estudiante.seccion": req.professor.section, "hijos_estudiantes.hijo_estudiante.grado": req.professor.grado });
 
-      // Verificar que el docente esté autenticado antes de cargar el informe
-      if (!docenteId) {
-        throw new Error('Docente no autenticado');
-      }
-  
-      // Crear el informe descriptivo
-      const informeDescriptivo = new InformeDescriptivo({
-        docente: docenteId,
-        lapso,
-        descripcion
-      });
-  
-      // Guardar el informe en la base de datos
-      await informeDescriptivo.save();
-  
-      res.status(201).send({ informeDescriptivo });
+        let lista = [];
+
+        lista_estudiantes.forEach(representante => {
+            representante.hijos_estudiantes.forEach(estudiante => {
+                lista.push(estudiante.hijo_estudiante);
+            });
+        });
+
+        res.send(lista);
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
+    }
+});
+
+// Cargar informe descriptivo
+router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) => {
+    const { lapso, descripcion } = req.body;
+
+    try {
+        // Verificar si esta autentificado como profesor
+        if (!req.professor) {
+            throw new Error("Acceso Denegado");
+        }
+
+        // Buscar el período actual
+        const periodo = req.periodo;
+        const lapsoActual = periodo.lapsos.find(l => l.lapso === lapso);
+
+        if (!lapsoActual) {
+            throw new Error("Lapso no encontrado");
+        }
+
+        // Encontrar el estudiante por su ID
+        const estudiante = lapsoActual.grados.reduce((found, grado) => {
+            if (found) return found;
+            const seccion = grado.secciones.find(s => s.estudiantes.some(e => e._id.toString() === req.params.id_estudiante));
+            if (seccion) {
+                return seccion.estudiantes.find(e => e._id.toString() === req.params.id_estudiante);
+            }
+            return null;
+        }, null);
+
+        if (!estudiante) {
+            throw new Error("Estudiante no encontrado");
+        }
+
+        // Actualizar el informe descriptivo del estudiante
+        estudiante.informe_descriptivo = descripcion;
+
+        // Guardar los cambios en el período
+        await periodo.save();
+
+        res.send({ message: "Informe descriptivo cargado exitosamente" });
+    } catch (error) {
+        handleError(error, res)
     }
 });
 
 // Establecer rasgos personales
-router.post('/rasgosPersonales/establecerRasgos', auth, async (req, res) => {
+router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req, res) => {
     const { lapso, rasgos } = req.body;
-    const userId = req.administrador ? req.administrador._id : req.professor._id;
-    const userType = req.administrador ? 'Administrador' : 'Docente';
-  
 
     try {
-
+        // Verificar si el usuario es un docente autenticado
         if (!req.professor) {
-            throw new Error("Acceso Denegado")
+            throw new Error("Acceso Denegado");
         }
 
+        // Acceder al lapso y sección correspondiente del docente
+        const lapsoActual = req.lapso;
+        const gradoActual = req.params.grado;
+        const seccionActual = req.params.seccion;
 
-      // Verificar que el usuario (docente o administrador) esté autenticado antes de establecer los rasgos
-      if (!userId) {
-        throw new Error(`${userType} no autenticado`);
-      }
-  
-      // Crear el registro de rasgos personales
-      const rasgosPersonales = new RasgosPersonales({
-        docente: userId,
-        lapso,
-        rasgos
-      });
-  
-      // Guardar los rasgos personales en la base de datos
-      await rasgosPersonales.save();
-  
-      res.status(201).send({ rasgosPersonales });
+        // Encontrar la sección correspondiente en el lapso actual
+        const seccion = lapsoActual.grados[gradoActual - 1].secciones.find(
+            (seccion) => seccion.seccion === seccionActual
+        );
+
+        // Verificar si la sección existe
+        if (!seccion) {
+            throw new Error("Sección no encontrada");
+        }
+
+        // Acceder a la lista de estudiantes en la sección
+        const estudiantes = seccion.estudiantes;
+
+        // Recorrer la lista de estudiantes y establecer los rasgos personales
+        estudiantes.forEach((estudiante) => {
+            const cedulaEstudiante = estudiante.cedula_escolar;
+
+            // Buscar al estudiante por cédula en la lista de rasgos
+            const estudianteRasgos = rasgos.find(
+                (rasgosEstudiante) => rasgosEstudiante.cedula_escolar === cedulaEstudiante
+            );
+
+            // Si se encontraron rasgos para el estudiante, actualizarlos
+            if (estudianteRasgos) {
+                estudiante.rasgos = estudianteRasgos.rasgos;
+            }
+        });
+
+        // Guardar los cambios en la base de datos
+        await lapsoActual.save();
+
+        res.status(201).send({ message: "Rasgos personales establecidos exitosamente" });
     } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
+        handleError(error, res)
     }
 });
 
-// Registrar nombre del proyecto escolar: Docente y Administrador
-router.post('/proyectoEscolar/registrarProyecto', auth, async (req, res) => {
-    // Verificar validez de la recepción de los datos
-    const { nombre, lapso } = req.body;
-  
-    try {
-        // Verificar que el usuario (docente o administrador) esté autenticado antes de registrar el nombre del proyecto escolar
-        if (!req.professor || !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
-
-        
-
-      
-      
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).send({error: error.message});
-    }
-});
-
-
-
-
-module.exports = router;
+module.exports = router

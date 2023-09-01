@@ -1,0 +1,275 @@
+# Rutas
+
+## DIRECTOR:
+
+1. Registrar director: Comprobado
+- Método: POST
+- URL: /direccion/nuevoDirector
+
+body: {
+    "username": "director01",
+    "email": "director01@gmail.com",
+    "password": "director01"
+}
+
+
+
+2. Iniciar sesión director: Comprobado
+- Método: POST
+- URL: /direccion/iniciarSesion
+
+body: {
+    "email": "director01@gmail.com",
+    "password": "director01"
+}
+
+
+
+3. Cerrar sesión director (Se requiere autentificacion como Director): Comprobado
+- Método: POST
+- URL: /direccion/cerrarSesion
+
+
+
+4. Eliminar director (Se requiere autentificacion como Director): Comprobado
+- Método: DELETE
+- URL: /direccion/eliminarDirector
+
+
+
+## ADMINISTRADOR:
+
+1. Registrar administrador (Se requiere autentificacion como Director): Comprobado
+- Método: POST
+- URL: /direccion/administracion/registrarAdministrador
+
+body: {
+    "name": "administrador01",
+    "email": "administrador01@gmail.com",
+    "password": "administrador01",
+    "habilitado": true
+}
+
+
+
+2. Eliminar administrador (Se requiere autentificacion como Director): Comprobado
+- Método: DELETE
+- URL: /direccion/administracion/:administrador/eliminarAdministrador
+
+URL (Ejemplo): {{url}}/direccion/administracion/64bbb87f2df25c56cc76f3a9/eliminarAdministrador
+
+
+
+3. Habilitar administrador (Se requiere autentificacion como Director): Comprobado
+- Método: PATCH
+- URL: /direccion/:administrador/habilitarAdministrador
+
+URL (Ejemplo): {{url}}/direccion/64bbb8f22df25c56cc76f3c0/habilitarAdministrador
+
+
+
+4. Inhabilitar administrador (Se requiere autentificacion como Director): Comprobado
+- Método: PATCH
+- URL: /direccion/:administrador/deshabilitarAdministrador
+
+URL (Ejemplo): {{url}}/direccion/64bbb8f22df25c56cc76f3c0/deshabilitarAdministrador
+
+
+
+5. Iniciar sesión administrador: Comprobado
+- Método: POST
+- URL: /administracion/iniciarSesion
+
+body: {
+    "email": "administrador01@gmail.com",
+    "password": "administrador01"
+}
+
+
+6. Cerrar sesión administrador (Se requiere autentificacion como Administrador): Comprobado
+- Método: POST
+- URL: /administracion/cerrarSesion
+
+
+
+## DOCENTE:
+
+1. Registrar docente (Se requiere autentificacion como Director o Administrador): Comprobado
+- Método: POST
+- URL: /docente/registrarDocente
+
+body: {
+    "name": "docente01",
+    "email": "docente01@gmail.com",
+    "password":"docente01",
+    "habilitado": true 
+}
+
+
+
+2. Iniciar sesión docente: Comprobado
+- Método: POST
+- URL: /docente/iniciarSesion
+
+body: {
+    "email":"docente01@gmail.com",
+    "password":"docente01"
+}
+
+
+3. Cerrar sesión docente (Se requiere autentificacion como Docente): Comprobado
+- Método: POST
+- URL: /docente/cerrarSesion
+
+
+
+## GESTION DOCENTE (Se requiere autentificacion como Director o Administrador):
+
+1. Asignar clase docente: En espera
+- Método: PATCH
+- URL: /docente/:docente/asignarClase
+
+URL (Ejemplo): {{url}}/docente/64ec883594e0c8182fd61b0c/asignarClase
+
+body: {
+    "grado": 1,
+    "seccion": "A"
+}
+
+
+2. Retirar clase docente: En espera
+- Método: PATCH
+- URL: /docente/:docente/clases/:clase/retirarClase
+
+URL (Ejemplo): {{url}}/docente/64ec5bf09ef7c0da7655148c/clases/64ec5c269ef7c0da765514d1/retirarClase
+
+
+
+3. Habilitar docente: Comprobado
+- Método: PATCH
+- URL: /docente/:docente/habilitarDocente
+
+{{url}}/docente/64b72491f9b15b41059400c1/habilitarDocente
+
+
+
+4. Deshabilitar docente: Comprobado
+- Método: PATCH
+- URL: /docente/:docente/deshabilitarDocente
+
+URL (Ejemplo): {{url}}/docente/64b72491f9b15b41059400c1/deshabilitarDocente
+
+
+
+5.Eliminar docente: Comprobado
+- Método: DELETE
+- URL: /docente/:docente/eliminarDocente
+
+URL (Ejemplo): {{url}}/docente/64b72491f9b15b41059400c1/deshabilitarDocente
+
+
+
+## GESTION REPRESENTANTES (Se requiere autentificacion como Director o Administrador):
+
+1. Crear representante: Comprobado
+- Método: POST
+- URL: /representante/nuevoRepresentante
+
+body: {
+    "name": "representante01",
+    "email": "representante01@gmail.com",
+    "password":"representante01"
+}
+
+
+
+2. Iniciar Sesion Representante: Comprobado
+- Método: POST
+- URL: /representante/iniciarSesion
+
+body: {
+    "email":"representante@gmail.com",
+    "password":"representante"
+}
+
+
+
+3. Cerrar Sesion Representante: Comprobado
+- Método: POST
+- URL: /representante/cerrarSesion
+
+
+
+4. Eliminar Representante: Comprobado
+- Método: POST
+- URL: /representante/:representante/eliminarRepresentante
+
+URL (Ejemplo): {{url}}/representante/64b7b934c554db638acf4727/eliminarRepresentante
+
+
+## GESTION ESTUDIANTES (Se requiere autentificacion como Director o Administrador):
+
+Agregar estudiante: 
+- Método: POST
+- URL: /representante/:representante/nuevoEstudiante
+
+URL (Ejmplo): {{url}}/representante/64ec882494e0c8182fd61aea/nuevoEstudiante
+
+body: {
+    "nombres": "Nombres Estudiante 01",
+    "apellidos": "Apellidos Estudiante 01",
+    "fecha_de_nacimiento": "19/05/2003",
+    "edad": 20,
+    "direccion": "Maturin Centro",
+    "cedula_escolar": "123456789",
+    "año_escolar": "2022-2023"
+}
+
+
+
+Mover sección estudiante: En espera
+- Método: GET
+- URL: /representante/:representante/estudiante/:estudiante/moverSección?sección
+
+Editar estudiante:
+- Método: PATCH
+- URL: /representante/:representante/estudiante/:estudiante/editarEstudiante
+
+Retirar sección estudiante: 
+- Método: DELETE
+- URL: /representante/:representante/estudiante/:estudiante/retirarSección
+
+Registro estudiantil: 
+- Método: PATCH
+- URL: /representante/:representante/estudiante/:estudiante/registroEstudiantil
+
+## EVALUAR DESEMPEÑO ESTUDIANTIL (Solo docente)
+
+Cargar informe descriptivo: 
+- Método: PATCH
+- URL: /estudiante/:estudiante/cargarInforme 
+
+Establecer rasgos personales: 
+- Método: PATCH
+- URL: /estudiante/:estudiante/cargarRasgosPersonales
+
+Registrar calificativo final: 
+- Método: PATCH
+- URL: /estudiante/:estudiante/registrarCalificativoFinal
+
+## VISUALIZAR DESEMPEÑO DE ESTUDIANTES (Todos)
+
+Constancia de estudios: 
+- Método: GET
+- URL: /estudiante/:estudiante/constanciaDeEstudios
+
+Boletín: 
+- Método: GET
+- URL: /estudiante/:estudiante/boletin
+
+Informe descriptivo: 
+- Método: GET
+- URL: /estudiante/:estudiante/informeDescriptivo
+
+
+
