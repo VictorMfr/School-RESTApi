@@ -1,6 +1,6 @@
 // Importando Librerias
 const express = require('express');
-const {handleError, serverRoutes} = require('../utils/utils')
+const { handleError, serverRoutes, checkAuths } = require('../utils/utils')
 
 // Importando modelos
 const Profesor = require('../models/professor');
@@ -12,14 +12,14 @@ const auth = require("../middleware/auth");
 // Creando el router
 const router = new express.Router();
 
-// Registrar docente: Director y Administrador
+// Registrar docente: Solo Director y Administrador
 router.post(serverRoutes.professor.newProfessor, auth, async (req, res) => {
-    const profesor = new Profesor(req.body);
     try {
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Creando Docente
+        const profesor = new Profesor(req.body);
 
         await profesor.save();
         res.status(201).send(profesor);
@@ -28,14 +28,13 @@ router.post(serverRoutes.professor.newProfessor, auth, async (req, res) => {
     }
 });
 
-// Borrar docente: Director y Administrador
+// Borrar docente: Solo Director y Administrador
 router.delete(serverRoutes.professor.deleteProfessor, auth, async (req, res) => {
     try {
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
-
+        // Borrando Docente
         const profesor = await Profesor.findOneAndDelete({ _id: req.params.id_docente });
 
         if (!profesor) {
@@ -48,7 +47,7 @@ router.delete(serverRoutes.professor.deleteProfessor, auth, async (req, res) => 
     }
 });
 
-// Inicio de sesión de docente
+// Inicio de sesión de Docente
 router.post(serverRoutes.professor.login, async (req, res) => {
     try {
         const profesor = await Profesor.findByCredentials(req.body.email, req.body.password);
@@ -59,13 +58,12 @@ router.post(serverRoutes.professor.login, async (req, res) => {
     }
 });
 
-// Cerrar sesión docente
+// Cerrar sesión Docente: Solo Docente
 router.post(serverRoutes.professor.logout, auth, async (req, res) => {
     try {
 
-        if (!req.professor) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Docente
+        checkAuths.checkIfAuthProfessor(req);
 
         req.professor.tokens = req.professor.tokens.filter((token) => token.token !== req.token);
         await req.professor.save();
@@ -76,13 +74,11 @@ router.post(serverRoutes.professor.logout, auth, async (req, res) => {
     }
 });
 
-// Habilitar Docente: Director Administrador
+// Habilitar Docente: Solo Director y Administrador
 router.patch(serverRoutes.professor.enableProfessor, auth, async (req, res) => {
     try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         const profesor = await Profesor.findOneAndUpdate(
             { _id: req.params.id_docente },
@@ -100,13 +96,11 @@ router.patch(serverRoutes.professor.enableProfessor, auth, async (req, res) => {
     }
 });
 
-// Deshabilitar Docente: Director y Administrador
+// Deshabilitar Docente: Solo Director y Administrador
 router.patch(serverRoutes.professor.disableProfessor, auth, async (req, res) => {
     try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         const profesor = await Profesor.findOneAndUpdate(
             { _id: req.params.id_docente },
@@ -124,13 +118,11 @@ router.patch(serverRoutes.professor.disableProfessor, auth, async (req, res) => 
     }
 });
 
-// Ver lista de Docentes: Director y Administrador
+// Ver lista de Docentes: Solo Director y Administrador
 router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
     try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         const profesores = await Profesor.find();
         res.send(profesores);
@@ -139,13 +131,11 @@ router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
     }
 });
 
-// Ver Docente: Director y Administrador
+// Ver Docente: Solo Director y Administrador
 router.get(serverRoutes.professor.seeProfessor, auth, async (req, res) => {
     try {
-
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         const profesor = await Profesor.findById(req.params.id_docente);
         res.send(profesor);
@@ -154,15 +144,14 @@ router.get(serverRoutes.professor.seeProfessor, auth, async (req, res) => {
     }
 });
 
-// Retirar clase Docente: Director y Administrador
+// Retirar clase Docente: Solo Director y Administrador
 router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, res) => {
     try {
-        const lapso = req.lapso;
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-        // Verificar si es Director o Administrador
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado");
-        }
+        // Obteniendo Lapso Actual
+        const lapso = req.lapso;
 
         // Saber a qué clase se refiere para eliminar
         const clasePorEliminar = req.params.id_clase;
@@ -193,13 +182,11 @@ router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, re
         const seccionEnPeriodo = gradoEnPeriodo.secciones.find(sec => sec.seccion.toLowerCase() === seccionABuscar);
 
         // Quitar Profesor de la Seccion
-        seccionEnPeriodo.docente = undefined; 
+        seccionEnPeriodo.docente = undefined;
 
         // Guardar Cambios
         await req.periodo.save();
         await profesor.save();
-
-    
 
         res.send(profesor);
     } catch (error) {
@@ -207,12 +194,11 @@ router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, re
     }
 });
 
-// Asignar Clase Docente: Director y Administrador
+// Asignar Clase Docente: Solo Director y Administrador
 router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res) => {
     try {
-        if (!req.director && !req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata de un Director o Administrador
+        checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         // Comprobar si el profesor está en la base de datos
         const profesor = await Profesor.findById(req.params.id_docente)
@@ -292,68 +278,114 @@ router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res)
 
 
 
-// Ver estudiantes del profesor
+// Ver estudiantes del profesor: Solo Docente
 router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) => {
     try {
+        // Verificar si se trata del profesor
+        checkAuths.checkIfAuthProfessor(req)
 
-        if (!req.professor) {
-            throw new Error("Acceso Denegado")
-        }
+        // Obtener la lista de clases impartidas por el profesor
+        const clasesDelProfesor = req.professor.clases_asignadas;
 
-        // Buscar todos los estudiantes que pertenecen al mismo grado y seccion que el profesor 5A 6B 7C
-        const lista_estudiantes = await Representante.find({ "hijos_estudiantes.hijo_estudiante.seccion": req.professor.section, "hijos_estudiantes.hijo_estudiante.grado": req.professor.grado });
+        // Obtener lista de todos los estudiantes de la escuela
+        const representantes = await Representante.find();
+        let estudiantes = [];
 
-        let lista = [];
-
-        lista_estudiantes.forEach(representante => {
+        representantes.forEach(representante => {
             representante.hijos_estudiantes.forEach(estudiante => {
-                lista.push(estudiante.hijo_estudiante);
+                estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id });
             });
         });
 
-        res.send(lista);
+
+        // Hacer un filtro
+        let lista_estudiantes = [];
+        clasesDelProfesor.forEach(clase => {
+            // Se observa cada clase por individual, se debe tomar el grado y seccion
+            const grado = clase.grado;
+            const seccion = clase.seccion.toUpperCase();
+
+            // Se hace un filtro en la lista de estudiantes dado grado y seccion
+            const estudiantesDeDichaClase = estudiantes.filter(est => est.grado == grado && est.seccion == seccion).map(est => {
+                return { nombres: est.nombres, apellidos: est.apellidos, cedula_escolar: est.cedula_escolar, _id: est._id }
+            })
+
+            // Se debe tomar la cedula y buscar en Periodo en el lapso actual 
+            estudiantesDeDichaClase.map(estudiante => {
+                // Se toma la cédula escolar para hacer una consulta al Periodo
+                const cedula = estudiante.cedula_escolar;
+
+                // Se toma el lapso correspondiente al Periodo Actual
+                const lapso = req.lapso;
+
+                // Se busca un estudiante entre los grados del lapso
+                const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
+                    // Se busca entre las secciones del grado
+                    return grado.secciones.find(seccion => {
+                        // Se busca entre los estudiantes de la seccion
+                        // Un estudiante que tenga la misma cedula
+                        return seccion.estudiantes.find(est => est.cedula_escolar === cedula)
+                    })
+                })
+
+                const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+                    // Se busca entre los estudiantes de la seccion
+                    // Un estudiante que tenga la misma cedula
+                    return seccion.estudiantes.find(est => est.cedula_escolar === cedula)
+                })
+
+                const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar === cedula);
+
+                estudiante._id = estudianteEnPeriodo._id
+            })
+
+            lista_estudiantes.push({
+                grado,
+                seccion,
+                estudiantes: estudiantesDeDichaClase
+            })
+
+        })
+
+
+
+        res.send(lista_estudiantes);
     } catch (error) {
         handleError(error, res)
     }
 });
 
-// Cargar informe descriptivo
+// Cargar informe descriptivo: Solo Docente
 router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) => {
-    const { lapso, descripcion } = req.body;
+    const { descripcion } = req.body;
 
     try {
-        // Verificar si esta autentificado como profesor
-        if (!req.professor) {
-            throw new Error("Acceso Denegado");
-        }
+        // Verificar si el usuario es un docente autenticado
+        checkAuths.checkIfAuthProfessor(req);
 
-        // Buscar el período actual
-        const periodo = req.periodo;
-        const lapsoActual = periodo.lapsos.find(l => l.lapso === lapso);
+        // Acceder al lapso actual del periodo actual
+        const lapso = req.lapso;
+        const id_estudiante = req.params.id_estudiante;
 
-        if (!lapsoActual) {
-            throw new Error("Lapso no encontrado");
-        }
 
-        // Encontrar el estudiante por su ID
-        const estudiante = lapsoActual.grados.reduce((found, grado) => {
-            if (found) return found;
-            const seccion = grado.secciones.find(s => s.estudiantes.some(e => e._id.toString() === req.params.id_estudiante));
-            if (seccion) {
-                return seccion.estudiantes.find(e => e._id.toString() === req.params.id_estudiante);
-            }
-            return null;
-        }, null);
+        // Se busca el estudiante en el periodo dado id_estudiante como identificador
+        const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
+            return grado.secciones.find(seccion => {
+                return seccion.estudiantes.find(est => est._id == id_estudiante)
+            })
+        })
 
-        if (!estudiante) {
-            throw new Error("Estudiante no encontrado");
-        }
+        const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+            return seccion.estudiantes.find(est => est._id == id_estudiante)
+        })
 
-        // Actualizar el informe descriptivo del estudiante
-        estudiante.informe_descriptivo = descripcion;
+        const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id == id_estudiante);
 
-        // Guardar los cambios en el período
-        await periodo.save();
+        // Se aplican los cambios al Estudiante
+        estudianteEnPeriodo.informe_descriptivo = descripcion;
+
+        // Guardar cambios
+        await req.periodo.save()
 
         res.send({ message: "Informe descriptivo cargado exitosamente" });
     } catch (error) {
@@ -361,53 +393,88 @@ router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) =
     }
 });
 
-// Establecer rasgos personales
+// Establecer rasgos personales: Solo Docente
 router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req, res) => {
-    const { lapso, rasgos } = req.body;
+    // Tomar los datos de Rasgos Personales
+    const { rasgos } = req.body;
 
     try {
         // Verificar si el usuario es un docente autenticado
-        if (!req.professor) {
-            throw new Error("Acceso Denegado");
-        }
+        checkAuths.checkIfAuthProfessor(req);
 
-        // Acceder al lapso y sección correspondiente del docente
-        const lapsoActual = req.lapso;
-        const gradoActual = req.params.grado;
-        const seccionActual = req.params.seccion;
+        // Acceder al lapso actual del periodo actual
+        const lapso = req.lapso;
+        const id_estudiante = req.params.id_estudiante;
 
-        // Encontrar la sección correspondiente en el lapso actual
-        const seccion = lapsoActual.grados[gradoActual - 1].secciones.find(
-            (seccion) => seccion.seccion === seccionActual
-        );
 
-        // Verificar si la sección existe
-        if (!seccion) {
-            throw new Error("Sección no encontrada");
-        }
+        // Se busca el estudiante en el periodo dado id_estudiante como identificador
+        const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
+            return grado.secciones.find(seccion => {
+                return seccion.estudiantes.find(est => est._id == id_estudiante)
+            })
+        })
 
-        // Acceder a la lista de estudiantes en la sección
-        const estudiantes = seccion.estudiantes;
+        const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+            return seccion.estudiantes.find(est => est._id == id_estudiante)
+        })
 
-        // Recorrer la lista de estudiantes y establecer los rasgos personales
-        estudiantes.forEach((estudiante) => {
-            const cedulaEstudiante = estudiante.cedula_escolar;
+        const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id == id_estudiante);
 
-            // Buscar al estudiante por cédula en la lista de rasgos
-            const estudianteRasgos = rasgos.find(
-                (rasgosEstudiante) => rasgosEstudiante.cedula_escolar === cedulaEstudiante
-            );
+        // Se aplican los cambios al Estudiante
+        estudianteEnPeriodo.rasgos = rasgos;
 
-            // Si se encontraron rasgos para el estudiante, actualizarlos
-            if (estudianteRasgos) {
-                estudiante.rasgos = estudianteRasgos.rasgos;
-            }
-        });
-
-        // Guardar los cambios en la base de datos
-        await lapsoActual.save();
+        // Guardar cambios
+        await req.periodo.save()
+        
 
         res.status(201).send({ message: "Rasgos personales establecidos exitosamente" });
+    } catch (error) {
+        handleError(error, res)
+    }
+});
+
+// Registrar Calificativo Final: Solo Docente
+router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, res) => {
+    // Tomar los datos de Rasgos Personales
+    const { literal_calificativo_final } = req.body;
+
+    try {
+        // Verificar si el usuario es un docente autenticado
+        checkAuths.checkIfAuthProfessor(req);
+
+
+        // Verificar validez del Dato
+        const availableCalifications = ["A", "B", "C", "D", "E"]
+        if (!availableCalifications.includes(literal_calificativo_final.toUpperCase())) {
+            throw new Error("Calificativo Final no válido");
+        }
+
+        // Acceder al lapso actual del periodo actual
+        const lapso = req.lapso;
+        const id_estudiante = req.params.id_estudiante;
+
+
+        // Se busca el estudiante en el periodo dado id_estudiante como identificador
+        const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
+            return grado.secciones.find(seccion => {
+                return seccion.estudiantes.find(est => est._id == id_estudiante)
+            })
+        })
+
+        const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+            return seccion.estudiantes.find(est => est._id == id_estudiante)
+        })
+
+        const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id == id_estudiante);
+
+        // Se aplican los cambios al Estudiante
+        estudianteEnPeriodo.literal_calificativo_final = literal_calificativo_final;
+
+        // Guardar cambios
+        await req.periodo.save()
+        
+
+        res.status(200).send({ message: "Literal calificativo final registrado Exitosamente" });
     } catch (error) {
         handleError(error, res)
     }

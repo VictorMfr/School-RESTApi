@@ -1,6 +1,6 @@
 // Importando Librerias
 const express = require('express');
-const {handleError, serverRoutes} = require('../utils/utils');
+const { handleError, serverRoutes, checkAuths } = require('../utils/utils');
 
 // Importando Modelos
 const Administrator = require('../models/administrator');
@@ -11,18 +11,16 @@ const auth = require("../middleware/auth");
 // Inicializando Router
 const router = new express.Router();
 
-
-// Registrar administrador: Director
+// Registrar administrador: Solo Director
 router.post(serverRoutes.administrator.newAdministrator, auth, async (req, res) => {
-    const administrador = new Administrator({
-        ...req.body
-    });
-
     try {
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector(req)
 
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        // Creando Administrador
+        const administrador = new Administrator({
+            ...req.body
+        });
 
         await administrador.save();
         res.status(201).send({ username: administrador.name, password: administrador.password });
@@ -31,14 +29,13 @@ router.post(serverRoutes.administrator.newAdministrator, auth, async (req, res) 
     }
 });
 
-// Eliminar administrador: Director
+// Eliminar administrador: Solo Director
 router.delete(serverRoutes.administrator.deleteAdministrator, auth, async (req, res) => {
     try {
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector(req);
 
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
-
+        // Eliminando Administrador
         const administrador = await Administrator.findOneAndDelete({ _id: req.params.id_administrador });
 
         if (!administrador) {
@@ -56,20 +53,21 @@ router.post(serverRoutes.administrator.login, async (req, res) => {
     try {
         const administrador = await Administrator.findByCredentials(req.body.email, req.body.password);
         const token = await administrador.generateAuthToken();
+
         res.send({ administrador, token });
     } catch (error) {
         handleError(error, res);
     }
 });
 
-// Cerrar sesion administrador
+// Cerrar sesion administrador: Solo Administrador
 router.post(serverRoutes.administrator.logout, auth, async (req, res) => {
     try {
 
-        if (!req.administrador) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Administrador
+        checkAuths.checkIfAuthAdministrator(req);
 
+        // Cerrando Sesion
         req.administrador.tokens = req.administrador.tokens.filter((token) => token.token !== req.token);
         await req.administrador.save();
 
@@ -79,13 +77,11 @@ router.post(serverRoutes.administrator.logout, auth, async (req, res) => {
     }
 });
 
-// Ver Lista de Administradores: Director
+// Ver Lista de Administradores: Solo Director
 router.get(serverRoutes.administrator.seeAdministrators, auth, async (req, res) => {
     try {
-
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector(req)
 
         // Buscar todos los administradores en la base de datos
         const administradores = await Administrator.find();
@@ -95,19 +91,17 @@ router.get(serverRoutes.administrator.seeAdministrators, auth, async (req, res) 
     }
 });
 
-// Ver Administrador: Director
+// Ver Administrador: Solo Director
 router.get(serverRoutes.administrator.seeAdministrator, auth, async (req, res) => {
     try {
-
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector(req);
 
         // Buscar administrador en la base de datos por ID
         const administrador = await Administrator.findById(req.params.id_administrador);
 
         if (!administrador) {
-            return res.status(404).send();
+            return res.status(404).send({ error: "No encontrado" });
         }
 
         res.send(administrador);
@@ -116,13 +110,11 @@ router.get(serverRoutes.administrator.seeAdministrator, auth, async (req, res) =
     }
 });
 
-// Habilitar/deshabilitar administrador: Director
+// Habilitar administrador: Solo Director
 router.patch(serverRoutes.administrator.enableAdministrador, auth, async (req, res) => {
     try {
-
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector(req);
 
         const administrador = await Administrator.findByIdAndUpdate(
             req.params.id_administrador,
@@ -131,7 +123,7 @@ router.patch(serverRoutes.administrator.enableAdministrador, auth, async (req, r
         );
 
         if (!administrador) {
-            return res.status(404).send();
+            return res.status(404).send({ error: "No existe tal Administrador" });
         }
 
         res.send(administrador);
@@ -140,12 +132,11 @@ router.patch(serverRoutes.administrator.enableAdministrador, auth, async (req, r
     }
 });
 
+// Deshabilitar administrador: Solo Director
 router.patch(serverRoutes.administrator.disableAdministrator, auth, async (req, res) => {
     try {
-
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        // Verificando si se trata del Director
+        checkAuths.checkIfAuthDirector
 
         const administrador = await Administrator.findByIdAndUpdate(
             req.params.id_administrador,

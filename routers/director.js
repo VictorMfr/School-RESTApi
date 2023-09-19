@@ -1,6 +1,6 @@
 // Importando Librerias
 const express = require('express')
-const { handleError, serverRoutes } = require('../utils/utils');
+const { handleError, serverRoutes, checkAuths } = require('../utils/utils');
 
 // Importando modelos
 const Director = require('../models/director')
@@ -17,9 +17,21 @@ const router = new express.Router()
 // Registro de director
 router.post(serverRoutes.director.newDirector, async (req, res) => {
     try {
+        // Verificar si el correo ya existe en la base de datos
+        const directors = await Director.find();
+
+        const isRepeatedEmail = directors.find(director => director.email == req.body.email)
+
+        if (isRepeatedEmail) {
+            throw new Error("ya esta registrado")
+        }
+
+
         // Crear Director
         const director = new Director(req.body);
         await director.save();
+
+
 
         // Enviar Respuesta
         const token = await director.generateAuthToken();
@@ -40,14 +52,13 @@ router.post(serverRoutes.director.login, async (req, res) => {
     }
 });
 
-// Cerrar sesión director
+// Cerrar sesión director: Solo Director
 router.post(serverRoutes.director.logout, auth, async (req, res) => {
     try {
+        // Verificar si se trata del Director
+        checkAuths.checkIfAuthDirector(req)
 
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
-
+        // Cerrar Sesion
         req.director.tokens = req.director.tokens.filter((token) => token.token !== req.token);
         await req.director.save();
         res.send();
@@ -56,14 +67,13 @@ router.post(serverRoutes.director.logout, auth, async (req, res) => {
     }
 });
 
-// Borrar director
+// Borrar director: Solo Director
 router.delete(serverRoutes.director.deleteSelfDirector, auth, async (req, res) => {
-
-    if (!req.director) {
-        throw new Error("Acceso Denegado")
-    }
-
     try {
+        // Verificar si se trata del Director
+        checkAuths.checkIfAuthDirector(req)
+
+        // Borrando Director
         await Director.findByIdAndDelete(req.director._id);
         res.send(req.director);
     } catch (error) {
@@ -75,13 +85,11 @@ router.delete(serverRoutes.director.deleteSelfDirector, auth, async (req, res) =
 
 
 
-// Registrar nuevo Periodo Escolar
+// Registrar nuevo Periodo Escolar: Solo Director
 router.post(serverRoutes.director.newPeriod, auth, async (req, res) => {
     try {
         // Verificar si se trata del director
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        checkAuths.checkIfAuthDirector(req)
 
         // Creando el Periodo
         const periodo = await new Periodo(req.body)
@@ -93,15 +101,12 @@ router.post(serverRoutes.director.newPeriod, auth, async (req, res) => {
     }
 });
 
-// Registar nuevo Lapso en Periodo Actual
+// Registar nuevo Lapso en Periodo Actual: Solo Director
 router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
     try {
         // Verificar si se trata del director
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        checkAuths.checkIfAuthDirector(req);
 
-        // Creando el lapso
         const periodo = req.periodo;
 
         // Verificar si el lapso es igual que los anteriores
@@ -120,66 +125,92 @@ router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
     }
 });
 
-// Registar grados en Periodo Actual
+// Registar grados en Periodo Actual: Solo Director
 router.post(serverRoutes.director.addGrades, auth, async (req, res) => {
     try {
         // Verificar si se trata del director
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        checkAuths.checkIfAuthDirector(req)
 
-        // Accediento al Periodo Correspondiente
+        // Accediento al periodo y lapso correspondiente
         const periodo = req.periodo
+        const lapso = req.lapso;
 
-        // Accediendo al Lapso Correspondiente
-        const lapso = periodo.lapsos[req.params.lapso - 1];
+        // Verificando si ningun grado esta repetido en la BBDD
+
+        // Obteniendo la lista de grados
+        const grados = req.body.grados;
+
+        // Obteniendo la lista de todos los grados en la BBDD
+        const gradosBBDD = lapso.grados;
+
+        // Verificar cada uno de los grados de req.body
+        grados.forEach(grado => {
+            // Comprobar si este grado en particular existe ya en la lista gradosBBDD
+            const gradoExiste = gradosBBDD.find(grad => grad.grado === grado.grado)
+
+            // Verificar si existe
+            if (gradoExiste) {
+                // Soltar Error
+                throw new Error(`El grado ${grado.grado} ya existe en la base de datos`)
+            }
+        })
 
         // Creando los grados
         lapso.grados = lapso.grados.concat(req.body.grados)
         await periodo.save();
 
         res.send(periodo)
-
     } catch (error) {
         handleError(error, res);
     }
 });
 
-// Registar secciones en Periodo Actual
+// Registar secciones en Periodo Actual: Solo Director
 router.post(serverRoutes.director.addSections, auth, async (req, res) => {
     try {
         // Verificar si se trata del director
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        checkAuths.checkIfAuthDirector(req)
 
-        // Accediento al Periodo Correspondiente
+        // Accediento al Periodo, lapso y grado Correspondiente
         const periodo = req.periodo
-
-        // Accediendo al Lapso Correspondiente
         const lapso = periodo.lapsos[req.params.lapso - 1];
-
-        // Accediento al grado correspondiente
         const grado = lapso.grados[req.params.grado - 1];
+
+        // Verificar que ninguna seccion del request está repetida en la BBDD
+
+        // Obteniendo la lista de secciones del request
+        const secciones = req.body.secciones;
+
+        // Obteniendo la lista de todas las secciones en la BBDD
+        const seccionesBBDD = grado.secciones;
+
+        // Verificar cada uno de las secciones de req.body no coincida con ninguno de la BBDD
+        secciones.forEach(seccion => {
+            // Comprobar si este grado en particular existe ya en la lista gradosBBDD
+            const seccionExiste = seccionesBBDD.find(sec => sec.seccion === seccion.seccion)
+
+            // Verificar si existe
+            if (seccionExiste) {
+                // Soltar Error
+                throw new Error(`La Seccion ${seccion.seccion} ya existe en la base de datos`)
+            }
+        })
 
         // Creando las secciones
         grado.secciones = grado.secciones.concat(req.body.secciones)
         await periodo.save();
 
         res.send(periodo)
-
     } catch (error) {
         handleError(error, res);
     }
 });
 
-// Registrar Estudiantes en Periodo Actual
+// Registrar Estudiantes en Periodo Actual: Solo Director
 router.post(serverRoutes.director.addStudents, auth, async (req, res) => {
     try {
         // Verificar si se trata del director
-        if (!req.director) {
-            throw new Error("Acceso Denegado")
-        }
+        checkAuths.checkIfAuthDirector(req)
 
         // Accediento al tiempo actual
         const periodo = req.periodo;

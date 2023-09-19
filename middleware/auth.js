@@ -30,8 +30,6 @@ const auth = async (req, res, next) => {
         // Consultando con la base de datos el ultimo periodo Escolar para potencialmente pasarlo como request
         const periodo = await Periodo.find().sort({ _id: -1 }).limit(1);
 
-
-
         if (director) {
             req.token = token;
             req.director = director;

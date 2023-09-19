@@ -1,6 +1,34 @@
 const handleError = (error, res) => {
     console.log(error);
-    res.send({ error: error.message })
+    res.status(500).send({ error: error.message })
+}
+
+const checkAuths = {
+    checkIfAuthDirector(req) {
+        if (!req.director) {
+            throw new Error("Acceso Denegado")
+        }
+    },
+    checkIfAuthAdministrator(req) {
+        if (!req.administrator) {
+            throw new Error("Acceso Denegado")
+        }
+    },
+    checkIfAuthProfessor(req) {
+        if (!req.professor) {
+            throw new Error("Acceso Denegado")
+        }
+    },
+    checkIfAuthRepresentant(req) {
+        if (!req.representant) {
+            throw new Error("Acceso Denegado")
+        }
+    },
+    checkIfAuthDirectorOrAdministrator(req) {
+        if (!req.director && !req.administrador) {
+            throw new Error("Acceso Denegado")
+        }
+    }
 }
 
 const serverRoutes = {
@@ -38,7 +66,8 @@ const serverRoutes = {
         assignClassProfessor: '/docente/:id_docente/asignarClase',
         seeProfessorStudents: '/profesor/estudiantes',
         uploadStudentReport: '/docentes/estudiantes/:id_estudiante/informeDescriptivo/cargarInforme',
-        uploadStudentPersonalTraits: '/rasgosPersonales/establecerRasgos'
+        uploadStudentPersonalTraits: '/docentes/estudiantes/:id_estudiante/rasgosPersonales/establecerRasgos',
+        registerFinalCalification: "/docentes/estudiantes/:id_estudiante/calificativoFinal/registrarLiteralCalificativoFinal"
     },
     representant: {
         newRepresentant: '/representante/nuevoRepresentante',
@@ -64,5 +93,6 @@ const serverRoutes = {
 
 module.exports = {
     handleError,
-    serverRoutes
+    serverRoutes,
+    checkAuths
 }

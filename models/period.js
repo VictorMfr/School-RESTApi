@@ -35,15 +35,12 @@ const studentSchema = new mongoose.Schema({
   rasgos: {
     creativo: {
       type: Boolean,
-      default: false,
     },
     responsable: {
       type: Boolean,
-      default: false,
     },
     colaborador: {
       type: Boolean,
-      default: false,
     },
     // ... Agrega más rasgos aquí si es necesario
   }
