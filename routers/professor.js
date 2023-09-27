@@ -311,16 +311,6 @@ router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res)
     }
 });
 
-
-
-
-
-
-
-
-
-
-
 // Ver estudiantes del profesor: Solo Docente
 router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) => {
     try {
