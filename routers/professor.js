@@ -1,6 +1,7 @@
 // Importando Librerias
 const express = require('express');
-const { handleError, serverRoutes, checkAuths } = require('../utils/utils')
+const { handleError, serverRoutes, checkAuths } = require('../utils/utils');
+const mongoose = require("mongoose")
 
 // Importando modelos
 const Profesor = require('../models/professor');
@@ -124,7 +125,18 @@ router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
         // Verificando si se trata de un Director o Administrador
         checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-        const profesores = await Profesor.find();
+        let profesores = await Profesor.find();
+
+        
+        // Haciendo un filtro en la entrega, tomar el profesor y buscarlo en el periodo
+
+        // Se toma el periodo
+        const periodo = req.periodo;
+
+        // Se toma el lapso correspondiente
+        const lapso = req.lapso;
+
+        // Se debe tomar el grado y seccion correspondiente
         res.send(profesores);
     } catch (error) {
         handleError(error, res)
@@ -138,6 +150,13 @@ router.get(serverRoutes.professor.seeProfessor, auth, async (req, res) => {
         checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
         const profesor = await Profesor.findById(req.params.id_docente);
+
+        
+
+
+
+
+
         res.send(profesor);
     } catch (error) {
         handleError(error, res)
@@ -165,24 +184,42 @@ router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, re
         }
 
         // Haciendose de identificadores claves para encontrar la clase del profesor en el periodo
-        const claseAEliminarPeriodo = profesor.clases_asignadas.find(cls => cls._id.toString() === clasePorEliminar);
+        const claseAEliminarPeriodo = profesor.clases_asignadas.find(cls => cls._id.toString() == clasePorEliminar);
+
         const gradoABuscar = claseAEliminarPeriodo.grado;
         const seccionABuscar = claseAEliminarPeriodo.seccion;
 
         // Actualizar la lista
-        profesor.clases_asignadas = profesor.clases_asignadas.filter(clase => clase._id.toString() !== clasePorEliminar);
+        profesor.clases_asignadas = profesor.clases_asignadas.filter(clase => clase._id.toString() != clasePorEliminar);
 
 
         // Hacer consistencia en el Periodo
 
         // Buscar el grado correspondiente en el periodo
-        const gradoEnPeriodo = lapso.grados.find(grad => grad.grado === gradoABuscar);
+        const gradoEnPeriodo = lapso.grados.find(grad => grad.grado == gradoABuscar);
 
         // Buscar la seccion correspondiente en el grado
-        const seccionEnPeriodo = gradoEnPeriodo.secciones.find(sec => sec.seccion.toLowerCase() === seccionABuscar);
+        const seccionEnPeriodo = gradoEnPeriodo.secciones.find(sec => sec.seccion.toLowerCase() == seccionABuscar);
 
         // Quitar Profesor de la Seccion
         seccionEnPeriodo.docente = undefined;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Guardar Cambios
         await req.periodo.save();
@@ -241,11 +278,15 @@ router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res)
         // El espacio está libre
 
         // Asignar la clase en profesor y guardar
-        profesor.clases_asignadas = [...profesor.clases_asignadas, { grado: req.body.grado, seccion: req.body.seccion }];
+        clase_id = new mongoose.mongo.ObjectId();
+        profesor.clases_asignadas = [...profesor.clases_asignadas, { grado: req.body.grado, seccion: req.body.seccion, _id: clase_id }];
         await profesor.save();
+
+        
 
         // Asignar docente en seccion en periodo y guardar
         seccion.docente = profesor.email;
+        seccion._id = clase_id;
         await periodo.save();
 
         // Actualizar el campo "docente" en los documentos de los representantes
@@ -253,14 +294,16 @@ router.patch(serverRoutes.professor.assignClassProfessor, auth, async (req, res)
         for (const representante of representantes) {
             for (const estudiante of representante.hijos_estudiantes) {
                 if (
-                    estudiante.hijo_estudiante.grado === req.body.grado &&
-                    estudiante.hijo_estudiante.seccion === req.body.seccion
+                    estudiante.hijo_estudiante.grado == req.body.grado &&
+                    estudiante.hijo_estudiante.seccion == req.body.seccion
                 ) {
                     estudiante.hijo_estudiante.docente = profesor.email;
                 }
             }
             await representante.save();
         }
+
+
 
         res.send(seccion);
     } catch (error) {
@@ -298,54 +341,6 @@ router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) =
         });
 
 
-        // Hacer un filtro
-        let lista_estudiantes = [];
-        clasesDelProfesor.forEach(clase => {
-            // Se observa cada clase por individual, se debe tomar el grado y seccion
-            const grado = clase.grado;
-            const seccion = clase.seccion.toUpperCase();
-
-            // Se hace un filtro en la lista de estudiantes dado grado y seccion
-            const estudiantesDeDichaClase = estudiantes.filter(est => est.grado == grado && est.seccion == seccion).map(est => {
-                return { nombres: est.nombres, apellidos: est.apellidos, cedula_escolar: est.cedula_escolar, _id: est._id }
-            })
-
-            // Se debe tomar la cedula y buscar en Periodo en el lapso actual 
-            estudiantesDeDichaClase.map(estudiante => {
-                // Se toma la cédula escolar para hacer una consulta al Periodo
-                const cedula = estudiante.cedula_escolar;
-
-                // Se toma el lapso correspondiente al Periodo Actual
-                const lapso = req.lapso;
-
-                // Se busca un estudiante entre los grados del lapso
-                const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
-                    // Se busca entre las secciones del grado
-                    return grado.secciones.find(seccion => {
-                        // Se busca entre los estudiantes de la seccion
-                        // Un estudiante que tenga la misma cedula
-                        return seccion.estudiantes.find(est => est.cedula_escolar === cedula)
-                    })
-                })
-
-                const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
-                    // Se busca entre los estudiantes de la seccion
-                    // Un estudiante que tenga la misma cedula
-                    return seccion.estudiantes.find(est => est.cedula_escolar === cedula)
-                })
-
-                const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar === cedula);
-
-                estudiante._id = estudianteEnPeriodo._id
-            })
-
-            lista_estudiantes.push({
-                grado,
-                seccion,
-                estudiantes: estudiantesDeDichaClase
-            })
-
-        })
 
 
 
@@ -425,7 +420,7 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
 
         // Guardar cambios
         await req.periodo.save()
-        
+
 
         res.status(201).send({ message: "Rasgos personales establecidos exitosamente" });
     } catch (error) {
@@ -472,7 +467,7 @@ router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, 
 
         // Guardar cambios
         await req.periodo.save()
-        
+
 
         res.status(200).send({ message: "Literal calificativo final registrado Exitosamente" });
     } catch (error) {

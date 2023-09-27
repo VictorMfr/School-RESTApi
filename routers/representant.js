@@ -79,6 +79,7 @@ router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) 
     checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
     // Verificar si los campos del body son válidos
+    console.log(req.body)
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'email', 'password']
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
@@ -88,15 +89,18 @@ router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) 
     }
 
     // Verificar si existe el representante
-    const representante = await Representante.findOne({ _id: req.params.id_representante });
+    let representante = await Representante.findById(req.params.id_representante);
 
     if (!representante) {
       throw new Error('El representante no existe');
     }
 
+    
     // Realizar las actualizaciones
-    updates.forEach((update) => req.representante[update] = req.body[update])
-    await req.representante.save()
+    updates.forEach((update) => representante[update] = req.body[update])
+
+    console.log(representante)
+    await representante.save()
 
     res.send(req.representante)
   } catch (error) {

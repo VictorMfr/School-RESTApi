@@ -309,6 +309,11 @@ router.post(serverRoutes.director.addStudents, auth, async (req, res) => {
     }
 });
 
+// Ver periodo Actual
+router.post(serverRoutes.director.seeCurrentPeriod, auth, async (req, res) => {
+    console.log(req.periodo)
+})
+
 
 
 

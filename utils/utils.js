@@ -10,7 +10,7 @@ const checkAuths = {
         }
     },
     checkIfAuthAdministrator(req) {
-        if (!req.administrator) {
+        if (!req.administrador) {
             throw new Error("Acceso Denegado")
         }
     },
@@ -38,6 +38,7 @@ const serverRoutes = {
         logout: '/direccion/cerrarSesion',
         deleteSelfDirector: '/direccion/eliminarDirector',
         newPeriod: '/direccion/nuevoPeriodo',
+        seeCurrentPeriod: "/direccion/periodoActual",
         newLapse: '/direccion/periodoActual/nuevoLapso',
         addGrades: '/direccion/periodoActual/lapsos/:lapso/crearGrados',
         addSections: '/direccion/periodoActual/lapsos/:lapso/grados/:grado/crearSecciones',
