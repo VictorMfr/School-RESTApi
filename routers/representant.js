@@ -172,11 +172,8 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
 });
 
 // Ver lista de todos los estudiantes: Solo Director y Administrador
-router.get(serverRoutes.representant.student.seeAllStudents, auth, async (req, res) => {
+router.get(serverRoutes.representant.student.seeAllStudents, async (req, res) => {
   try {
-    // Verificando si se trata de un Director o Administrador
-    checkAuths.checkIfAuthDirectorOrAdministrator(req)
-
     // Buscar todos los representantes en la base de datos
     const representantes = await Representante.find();
 
@@ -213,7 +210,7 @@ router.patch(serverRoutes.representant.student.transferSectionStudent, auth, asy
 
     representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId).hijo_estudiante.seccion = nuevaSeccion;
 
-    await representante.save()
+    await representante.save();
 
     res.send({ message: 'Sección del estudiante actualizada exitosamente' });
   } catch (error) {
@@ -268,8 +265,6 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
   const estudianteId = req.params.id_estudiante;
 
   try {
-    // Verificando si se trata de un Director o Administrador
-    checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
     // Verificar si existe el representante
     const representante = await Representante.findOne({ _id: req.params.id_representante });
@@ -298,36 +293,6 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
   }
 });
 
-// Registrar Literal Calificativo Final: Solo Docente
-router.patch(serverRoutes.representant.student.addFinalNote, auth, async (req, res) => {
-  try {
-    // Verificando si se trata del Docente
-    checkAuths.checkIfAuthProfessor(req);
-
-    // Registrando Calificativo Final
-    const representante = req.representante;
-    const estudianteId = req.params.id_estudiante;
-    const literalCalificativoFinal = req.body.literal_calificativo_final;
-
-    // Buscar el estudiante dentro de la lista hijos_estudiantes del representante
-    const estudiante = representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId);
-
-    if (!estudiante) {
-      return res.status(404).send({ error: 'Estudiante no encontrado en la lista del representante' });
-    }
-
-    // Asignar el literal calificativo final al estudiante
-    estudiante.hijo_estudiante.literal_calificativo_final = literalCalificativoFinal;
-
-    // Guardar los cambios en el representante
-    await representante.save();
-
-    res.send({ message: 'Literal calificativo final registrado exitosamente' });
-  } catch (error) {
-    handleError(error, res)
-  }
-});
-
 // Ver lista de representantes: Solo Director y Administrador
 router.get(serverRoutes.representant.seeRepresentants, auth, async (req, res) => {
   try {
@@ -346,11 +311,9 @@ router.get(serverRoutes.representant.seeRepresentants, auth, async (req, res) =>
 // Ver representante: Solo Director y Administrador
 router.get(serverRoutes.representant.seeRepresentant, auth, async (req, res) => {
   try {
-    // Verificando si se trata de un Director o Administrador
-    checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
     // Buscar administrador en la base de datos por ID
-    const representante = await Representante.findById(req.params.id_administrador);
+    const representante = await Representante.findById(req.params.id_representante);
 
     if (!representante) {
       return res.status(404).send();

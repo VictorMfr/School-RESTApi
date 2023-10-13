@@ -16,6 +16,7 @@ const checkAuths = {
     },
     checkIfAuthProfessor(req) {
         if (!req.professor) {
+            console.log("heeyy")
             throw new Error("Acceso Denegado")
         }
     },
@@ -39,9 +40,10 @@ const serverRoutes = {
         deleteSelfDirector: '/direccion/eliminarDirector',
         newPeriod: '/direccion/nuevoPeriodo',
         seeCurrentPeriod: "/direccion/periodoActual",
+        seeCurrentLapse: "/direccion/lapsoActual",
         newLapse: '/direccion/periodoActual/nuevoLapso',
-        addGrades: '/direccion/periodoActual/lapsos/:lapso/crearGrados',
-        addSections: '/direccion/periodoActual/lapsos/:lapso/grados/:grado/crearSecciones',
+        addGrades: '/direccion/periodoActual/lapsos/lapsoActual/crearGrados',
+        addSections: '/direccion/periodoActual/lapsos/lapsoActual/crearSecciones',
         addStudents: '/direccion/periodoActual/lapsoActual/grados/:grado/secciones/:seccion/registrarEstudiantes'
     },
     administrator: {

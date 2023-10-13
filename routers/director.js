@@ -14,24 +14,32 @@ const auth = require("../middleware/auth")
 // Iniciando Router
 const router = new express.Router()
 
+// Import any necessary dependencies and models
+
+// Define the predefined secret key (replace 'yourSecretKey' with the actual secret key)
+const predefinedSecretKey = process.env.SECRET_KEY;
+
 // Registro de director
 router.post(serverRoutes.director.newDirector, async (req, res) => {
     try {
-        // Verificar si el correo ya existe en la base de datos
-        const directors = await Director.find();
+        // Verify if the sent secret key matches the predefined secret key
+        const sentSecretKey = req.body.secretKey;
 
-        const isRepeatedEmail = directors.find(director => director.email == req.body.email)
-
-        if (isRepeatedEmail) {
-            throw new Error("ya esta registrado")
+        if (sentSecretKey !== predefinedSecretKey) {
+            return res.status(401).send({ error: 'Llave secreta no válida' });
         }
 
+        // Verificar si el correo ya existe en la base de datos
+        const directors = await Director.find();
+        const isRepeatedEmail = directors.find(director => director.email === req.body.email);
+
+        if (isRepeatedEmail) {
+            throw new Error("ya esta registrado");
+        }
 
         // Crear Director
         const director = new Director(req.body);
         await director.save();
-
-
 
         // Enviar Respuesta
         const token = await director.generateAuthToken();
@@ -40,6 +48,7 @@ router.post(serverRoutes.director.newDirector, async (req, res) => {
         handleError(error, res);
     }
 });
+
 
 // Inicio de sesión de director
 router.post(serverRoutes.director.login, async (req, res) => {
@@ -95,6 +104,18 @@ router.post(serverRoutes.director.newPeriod, auth, async (req, res) => {
         const periodo = await new Periodo(req.body)
         await periodo.save()
 
+        // Eliminando todos los calificativos de los estudiantes de la base de datos estatica
+        const representantes = await Representante.find();
+
+        representantes.forEach(async (representante) => {
+            representante.hijos_estudiantes.forEach(h_est => {
+                h_est.hijo_estudiante.literal_calificativo_final = undefined
+            })
+            await representante.save();
+        })
+
+
+
         res.send(periodo)
     } catch (error) {
         handleError(error, res);
@@ -108,15 +129,26 @@ router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
         checkAuths.checkIfAuthDirector(req);
 
         const periodo = req.periodo;
+    
 
         // Verificar si el lapso es igual que los anteriores
-        const coincidencia = periodo.lapsos.find(lapso => lapso.lapso = req.body.lapso)
-        if (coincidencia) {
-            throw new Error("El numero de lapso ya existe");
-        }
+        
 
         // Añadir lapso
-        periodo.lapsos.push(req.body);
+        console.log(req.lapso)
+        periodo.lapsos.push({lapso: req.lapso && req.lapso.lapso? req.lapso.lapso + 1: 1, ...req.body});
+        
+        // Eliminando todos los calificativos de los estudiantes de la base de datos estatica
+        const representantes = await Representante.find();
+
+        representantes.forEach(async (representante) => {
+            representante.hijos_estudiantes.forEach(h_est => {
+                h_est.hijo_estudiante.literal_calificativo_final = undefined
+            })
+            await representante.save();
+        })
+        
+        
         await periodo.save();
 
         res.send(periodo)
@@ -171,36 +203,21 @@ router.post(serverRoutes.director.addSections, auth, async (req, res) => {
         // Verificar si se trata del director
         checkAuths.checkIfAuthDirector(req)
 
-        // Accediento al Periodo, lapso y grado Correspondiente
-        const periodo = req.periodo
-        const lapso = periodo.lapsos[req.params.lapso - 1];
-        const grado = lapso.grados[req.params.grado - 1];
+        // Accediento al lapso y grado Correspondiente
+        const periodo = req.periodo;
+        const lapso = req.lapso;
+        const grados = lapso.grados;
 
-        // Verificar que ninguna seccion del request está repetida en la BBDD
+        // TAREA: LAS SECCIONES SE CARGAN PARA TODOS LOS GRADOS, DESDE DE BODY.SECCIONES
+        // HAY QUE: 1) VERIFICAR SI LAS SECCIONES YA ESTAN INCLUIDAS
+        // 2) AGREGAR LAS SECCIONES PARA TODOS LOS POSIBLES GRADOS
 
-        // Obteniendo la lista de secciones del request
         const secciones = req.body.secciones;
 
-        // Obteniendo la lista de todas las secciones en la BBDD
-        const seccionesBBDD = grado.secciones;
+        periodo.lapsos[periodo.lapsos.length -1].grados.map(grado => grado.secciones = [...secciones] )
 
-        // Verificar cada uno de las secciones de req.body no coincida con ninguno de la BBDD
-        secciones.forEach(seccion => {
-            // Comprobar si este grado en particular existe ya en la lista gradosBBDD
-            const seccionExiste = seccionesBBDD.find(sec => sec.seccion === seccion.seccion)
-
-            // Verificar si existe
-            if (seccionExiste) {
-                // Soltar Error
-                throw new Error(`La Seccion ${seccion.seccion} ya existe en la base de datos`)
-            }
-        })
-
-        // Creando las secciones
-        grado.secciones = grado.secciones.concat(req.body.secciones)
         await periodo.save();
-
-        res.send(periodo)
+        res.send("hola")
     } catch (error) {
         handleError(error, res);
     }
@@ -310,9 +327,15 @@ router.post(serverRoutes.director.addStudents, auth, async (req, res) => {
 });
 
 // Ver periodo Actual
-router.post(serverRoutes.director.seeCurrentPeriod, auth, async (req, res) => {
-    console.log(req.periodo)
+router.get(serverRoutes.director.seeCurrentPeriod, auth, async (req, res) => {
+    res.send(req.periodo);
 })
+
+// Ver Lapso Actual
+router.get(serverRoutes.director.seeCurrentLapse, auth, async (req, res) => {
+    res.send(req.lapso);
+})
+
 
 
 

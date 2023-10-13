@@ -77,6 +77,9 @@ const representantSchema = new mongoose.Schema({
             año_escolar: {
                 type: String,
                 required: true
+            },
+            literal_calificativo_final: {
+                type: String,
             }
         }
     }]

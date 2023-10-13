@@ -317,22 +317,57 @@ router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) =
         // Verificar si se trata del profesor
         checkAuths.checkIfAuthProfessor(req)
 
+        // SE NECESITA TOMAR UNA LISTA PARA EDICIÓN EN EL PERIODO
+        
+        // Debemos tomar los datos del el profesor
+        // Ej. [grado 1, sección A]
+
         // Obtener la lista de clases impartidas por el profesor
         const clasesDelProfesor = req.professor.clases_asignadas;
 
-        // Obtener lista de todos los estudiantes de la escuela
-        const representantes = await Representante.find();
-        let estudiantes = [];
+        // Tomar estos datos para buscar en el periodo, todos los estudiantes que tienen la misma sección y grado del profesor
+        // Tomar el periodo y lapso actual
 
-        representantes.forEach(representante => {
-            representante.hijos_estudiantes.forEach(estudiante => {
-                estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id });
+        const periodoActual = req.periodo;
+        const lapsoActual = req.lapso;
+
+        // Hay que tomar el lapso y buscar los estudiantes 
+        let lista_estudiantes = [];
+        clasesDelProfesor.forEach(clase => {
+            // Tengo grado y seccion
+            const grado = clase.grado;
+            const seccion = clase.seccion;
+
+            // Tengo que buscar en el periodo los estudiantes correspondientes en el lapso actual
+            // grado y sección
+
+            const gradoCorrespondiente= lapsoActual.grados.find(grad => grad.grado == grado);
+            console.log("grado Correspondiente: " + gradoCorrespondiente)
+
+            // Tengo que buscar la sección que coincida con la del profesor
+            const seccionCorrespondiente = gradoCorrespondiente.secciones.find(sec => sec.seccion == seccion)
+            console.log("seccion Correspondiente: " + seccionCorrespondiente)
+
+            // Buscar la lista de estudiantes
+            let estudiantes = seccionCorrespondiente.estudiantes
+
+
+            // editar la lista de estudiantes de manera que tenga grado y seccion
+            estudiantes = estudiantes.map(est => {
+                return {
+                    nombres: est.nombre,
+                    apellidos: est.apellido,
+                    cedula_escolar: est.cedula_escolar,
+                    grado: gradoCorrespondiente.grado,
+                    seccion: seccionCorrespondiente.seccion.toUpperCase(),
+                    _id: est._id
+                }
             });
-        });
 
-
-
-
+            // Añadirlo en la lista de estduiantes
+            lista_estudiantes = [...lista_estudiantes, ...estudiantes]
+        })
+        console.log(lista_estudiantes)
 
         res.send(lista_estudiantes);
     } catch (error) {
@@ -343,14 +378,15 @@ router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) =
 // Cargar informe descriptivo: Solo Docente
 router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) => {
     const { descripcion } = req.body;
+    
 
     try {
-        // Verificar si el usuario es un docente autenticado
-        checkAuths.checkIfAuthProfessor(req);
+    
 
         // Acceder al lapso actual del periodo actual
         const lapso = req.lapso;
         const id_estudiante = req.params.id_estudiante;
+        console.log(req.params.id_estudiante)
 
 
         // Se busca el estudiante en el periodo dado id_estudiante como identificador
@@ -384,8 +420,6 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
     const { rasgos } = req.body;
 
     try {
-        // Verificar si el usuario es un docente autenticado
-        checkAuths.checkIfAuthProfessor(req);
 
         // Acceder al lapso actual del periodo actual
         const lapso = req.lapso;
@@ -412,7 +446,7 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
         await req.periodo.save()
 
 
-        res.status(201).send({ message: "Rasgos personales establecidos exitosamente" });
+        res.status(200).send({ message: "Rasgos personales establecidos exitosamente" });
     } catch (error) {
         handleError(error, res)
     }
@@ -420,13 +454,12 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
 
 // Registrar Calificativo Final: Solo Docente
 router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, res) => {
-    // Tomar los datos de Rasgos Personales
+    console.log(req.body)
     const { literal_calificativo_final } = req.body;
 
     try {
         // Verificar si el usuario es un docente autenticado
         checkAuths.checkIfAuthProfessor(req);
-
 
         // Verificar validez del Dato
         const availableCalifications = ["A", "B", "C", "D", "E"]
@@ -437,7 +470,6 @@ router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, 
         // Acceder al lapso actual del periodo actual
         const lapso = req.lapso;
         const id_estudiante = req.params.id_estudiante;
-
 
         // Se busca el estudiante en el periodo dado id_estudiante como identificador
         const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
@@ -455,8 +487,23 @@ router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, 
         // Se aplican los cambios al Estudiante
         estudianteEnPeriodo.literal_calificativo_final = literal_calificativo_final;
 
+        const cedulaEnPeriodo = estudianteEnPeriodo.cedula_escolar;
+
+        // Se debe ahora registrarlo en la base de datos estatica
+        const representantes = await Representante.find();
+
+        const representanteBuscado = representantes.findIndex(rep => {
+            return rep.hijos_estudiantes.find(h_est => h_est.hijo_estudiante.cedula_escolar == cedulaEnPeriodo)
+        })
+
+        const estudianteBuscado = representantes[representanteBuscado].hijos_estudiantes.findIndex(h_est => h_est.hijo_estudiante.cedula_escolar == cedulaEnPeriodo)
+
+        // Hacer la edición
+        representantes[representanteBuscado].hijos_estudiantes[estudianteBuscado].hijo_estudiante.literal_calificativo_final = literal_calificativo_final;
+
         // Guardar cambios
         await req.periodo.save()
+        await representantes[representanteBuscado].save()
 
 
         res.status(200).send({ message: "Literal calificativo final registrado Exitosamente" });
