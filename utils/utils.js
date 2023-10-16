@@ -70,7 +70,12 @@ const serverRoutes = {
         seeProfessorStudents: '/profesor/estudiantes',
         uploadStudentReport: '/docentes/estudiantes/:id_estudiante/informeDescriptivo/cargarInforme',
         uploadStudentPersonalTraits: '/docentes/estudiantes/:id_estudiante/rasgosPersonales/establecerRasgos',
-        registerFinalCalification: "/docentes/estudiantes/:id_estudiante/calificativoFinal/registrarLiteralCalificativoFinal"
+        registerFinalCalification: "/docentes/estudiantes/:id_estudiante/calificativoFinal/registrarLiteralCalificativoFinal",
+        
+        seeBulletin: "/estudiante/:id_estudiante/boletin",
+        seeStudentPersonalTraits: "/estudiantes/:id_estudiante/rasgosPersonales",
+        SeeStudentReport: "/estudiante/:id_estudiante/informeDescriptivo",
+        seeStudentProof: "/estudiante/:id_estudiante/constanciaDeEstudios",
     },
     representant: {
         newRepresentant: '/representante/nuevoRepresentante',
@@ -83,12 +88,11 @@ const serverRoutes = {
         
         student: {
             addStudent: '/representante/:id_representante/nuevoEstudiante',
-            seeStudents: '/representante/:id_representante',
+            seeStudents: '/representante/estudiantes',
             seeAllStudents: '/direccion/estudiantes',
             transferSectionStudent: '/representante/:id_representante/estudiante/:id_estudiante/moverSeccion',
             editStudent: '/representante/:id_representante/estudiante/:id_estudiante/editarEstudiante',
             removeSection: '/representante/:id_representante/estudiante/:id_estudiante/retirarSeccion',
-            addFinalNote: '/representante/:id_representante/estudiante/:id_estudiante/registrarLiteralFinal'
         }
 
     }

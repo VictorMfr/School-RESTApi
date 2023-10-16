@@ -217,7 +217,7 @@ router.post(serverRoutes.director.addSections, auth, async (req, res) => {
         periodo.lapsos[periodo.lapsos.length -1].grados.map(grado => grado.secciones = [...secciones] )
 
         await periodo.save();
-        res.send("hola")
+        res.send(periodo)
     } catch (error) {
         handleError(error, res);
     }

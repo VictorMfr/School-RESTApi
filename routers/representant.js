@@ -95,7 +95,7 @@ router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) 
       throw new Error('El representante no existe');
     }
 
-    
+
     // Realizar las actualizaciones
     updates.forEach((update) => representante[update] = req.body[update])
 
@@ -159,12 +159,43 @@ router.patch(serverRoutes.representant.student.addStudent, auth, async (req, res
 // Ver lista de Estudiantes del representante: Solo Director y Administrador
 router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res) => {
   try {
-    // Verificando si se trata de un Director o Administrador
-    checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-    // Buscar todos los estudiantes del representante en la base de datos
-    const representanteEstudiantes = await Representante.findById(req.params.id_representante).hijos_estudiantes;
-    res.send(representanteEstudiantes);
+    // Obtener la lista de estudiantes del representante a traves de req.representnate
+    const representante = req.representante;
+
+    // Accediendo a una lista de estudiantes hijos
+    let estudiantes_hijos = representante.hijos_estudiantes.map(est => {
+      return { ...est.hijo_estudiante }
+    })
+
+    // Ahora es necesario obtener la id del estudiante del periodo
+    estudiantes_hijos = estudiantes_hijos.map(est => {
+      // Para cada estudiante se debe tomar la cedula escolar y buscarla en periodo
+      const cedula_escolar = est.cedula_escolar;
+
+      // Buscar estudiante en Periodo
+      const estudianteEnPeriodoGrado = req.lapso.grados.find(grado => {
+        return grado.secciones.find(seccion => {
+          return seccion.estudiantes.find(est => est.cedula_escolar == cedula_escolar)
+        })
+      })
+
+      const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+        return seccion.estudiantes.find(est => est.cedula_escolar == cedula_escolar)
+      })
+
+      const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar == cedula_escolar)
+
+      return {
+        ...est,
+        _id: estudianteEnPeriodo._id
+      }
+    })
+
+
+    res.send({ message: estudiantes_hijos });
+
+
 
   } catch (error) {
     handleError(error, res)
@@ -324,5 +355,7 @@ router.get(serverRoutes.representant.seeRepresentant, auth, async (req, res) => 
     handleError(error, res)
   }
 });
+
+
 
 module.exports = router;

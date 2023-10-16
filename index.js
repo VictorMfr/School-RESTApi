@@ -17,7 +17,7 @@ const app = express();
 //Configurar Express
 app.use(express.json())
 app.use(cors({
-    origin: "https://escuela-frontend.netlify.app",
+    origin: "escuela-frontend.netlify.app",
     credentials: true
 }))
 
