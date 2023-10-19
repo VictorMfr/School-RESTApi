@@ -11,6 +11,12 @@ const auth = require("../middleware/auth");
 // Inicializando Router
 const router = new express.Router();
 
+
+
+
+
+
+
 // Registro de representante: Solo Director y Administrador
 router.post(serverRoutes.representant.newRepresentant, auth, async (req, res) => {
   try {
@@ -65,7 +71,8 @@ router.delete(serverRoutes.representant.deleteRepresentant, auth, async (req, re
     // Verificando si se trata de un Director o Administrador
     checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
-    const representante = await Representante.findOneAndDelete({ _id: req.params.id_representante })
+    const representante = await Representante.findOneAndDelete({ _id: req.params.id_representante });
+
     res.send(representante);
   } catch (error) {
     handleError(error, res)
@@ -79,7 +86,6 @@ router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) 
     checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
     // Verificar si los campos del body son válidos
-    console.log(req.body)
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name', 'email', 'password']
     const isValidOperation = updates.every((update) => allowedUpdates.includes(update))
@@ -99,10 +105,8 @@ router.patch(serverRoutes.representant.editRepresentant, auth, async (req, res) 
     // Realizar las actualizaciones
     updates.forEach((update) => representante[update] = req.body[update])
 
-    console.log(representante)
     await representante.save()
-
-    res.send(req.representante)
+    res.send({ message: "El Representante ha sido actualizado correctamente" })
   } catch (error) {
     handleError(error, res)
   }
@@ -156,7 +160,7 @@ router.patch(serverRoutes.representant.student.addStudent, auth, async (req, res
   }
 });
 
-// Ver lista de Estudiantes del representante: Solo Director y Administrador
+// Ver lista de Estudiantes del representante
 router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res) => {
   try {
 
@@ -186,6 +190,11 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
 
       const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar == cedula_escolar)
 
+      console.log({
+        ...est,
+        _id: estudianteEnPeriodo._id
+      })
+
       return {
         ...est,
         _id: estudianteEnPeriodo._id
@@ -203,9 +212,8 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
 });
 
 // Ver lista de todos los estudiantes: Solo Director y Administrador
-router.get(serverRoutes.representant.student.seeAllStudents, async (req, res) => {
+router.get(serverRoutes.representant.student.seeAllStudents, auth, async (req, res, next) => {
   try {
-    // Buscar todos los representantes en la base de datos
     const representantes = await Representante.find();
 
     // Crear un arreglo para almacenar los estudiantes de todos los representantes
@@ -213,15 +221,61 @@ router.get(serverRoutes.representant.student.seeAllStudents, async (req, res) =>
     // Iterar sobre los representantes y obtener los estudiantes de cada uno
     representantes.forEach(representante => {
       representante.hijos_estudiantes.forEach(estudiante => {
-        estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id });
+        estudiantes.push({ ...estudiante.hijo_estudiante, _id: estudiante._id, id_representante: representante._id, static: req.lapso ? false : true });
       });
     });
 
-    res.send(estudiantes);
+    const isStatic = (!req.lapso) || (req.lapso && (req.lapso.grados.length == 0)) || (req.lapso && (req.lapso.grados.length > 0) && req.lapso.grados[0] && (req.lapso.grados[0].secciones.length == 0))
+
+    // Primer periodo
+    if (isStatic) {
+      return res.send(estudiantes);
+    }
+
+    let estudiantesEnPeriodo = [];
+    let estudiantesEnPeriodoFlag = false; // Variable de control
+
+    for (const est of estudiantes) {
+      const cedula = est.cedula_escolar;
+
+      // Buscar estudiante en Periodo
+      const estudianteEnPeriodoGrado = req.lapso.grados.find(grado => {
+        return grado.secciones.find(seccion => {
+          return seccion.estudiantes.find(est => est.cedula_escolar == cedula)
+        })
+      });
+
+      if (!estudianteEnPeriodoGrado) {
+        estudiantesEnPeriodoFlag = true; // Establecer la bandera en verdadero
+        break; // Salir del bucle
+      }
+
+      const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+        return seccion.estudiantes.find(est => est.cedula_escolar == cedula)
+      });
+
+      const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar == cedula)
+
+      estudiantesEnPeriodo.push({
+        ...est,
+        _id: estudianteEnPeriodo._id
+      });
+    }
+
+    // Verificar la bandera y responder en consecuencia
+    if (estudiantesEnPeriodoFlag) {
+      return res.send(estudiantes);
+    }
+
+    console.log(estudiantesEnPeriodo);
+    //await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, )
+
+    res.send(estudiantesEnPeriodo);
   } catch (error) {
-    handleError(error, res)
+    handleError(error, res);
   }
 });
+
 
 // Mover Seccion estudiante: Solo Director y Administrador
 router.patch(serverRoutes.representant.student.transferSectionStudent, auth, async (req, res) => {
@@ -313,7 +367,7 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
     }
 
     // Retirar la sección, asignando null al campo "seccion" del estudiante
-    estudiante.hijo_estudiante.seccion = "ninguno";
+    estudiante.hijo_estudiante.seccion = undefined;
 
     // Guardar los cambios en el representante
     await representante.save();

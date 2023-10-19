@@ -44,7 +44,6 @@ const administratorSchema = new mongoose.Schema({
 
     habilitado: {
         type: Boolean,
-        required: true,
     }
 });
 

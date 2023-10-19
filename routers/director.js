@@ -14,9 +14,6 @@ const auth = require("../middleware/auth")
 // Iniciando Router
 const router = new express.Router()
 
-// Import any necessary dependencies and models
-
-// Define the predefined secret key (replace 'yourSecretKey' with the actual secret key)
 const predefinedSecretKey = process.env.SECRET_KEY;
 
 // Registro de director
@@ -114,7 +111,13 @@ router.post(serverRoutes.director.newPeriod, auth, async (req, res) => {
             await representante.save();
         })
 
+        // Eliminando todos las clases del profesor en la base de datos estatica
+        const profesores = await Profesor.find();
 
+        profesores.forEach(async (profesor) => {
+            profesor.clases_asignadas = []
+            await profesor.save();
+        })
 
         res.send(periodo)
     } catch (error) {
@@ -146,6 +149,14 @@ router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
                 h_est.hijo_estudiante.literal_calificativo_final = undefined
             })
             await representante.save();
+        })
+
+        // Eliminando todos las clases del profesor en la base de datos estatica
+        const profesores = await Profesor.find();
+
+        profesores.forEach(async (profesor) => {
+            profesor.clases_asignadas = []
+            await profesor.save();
         })
         
         
@@ -327,13 +338,16 @@ router.post(serverRoutes.director.addStudents, auth, async (req, res) => {
 });
 
 // Ver periodo Actual
-router.get(serverRoutes.director.seeCurrentPeriod, auth, async (req, res) => {
-    res.send(req.periodo);
+router.get(serverRoutes.director.seeCurrentPeriod, async (req, res) => {
+    const periodo = await Periodo.find().sort({ _id: -1 }).limit(1);
+    res.send(periodo[0])
 })
 
 // Ver Lapso Actual
-router.get(serverRoutes.director.seeCurrentLapse, auth, async (req, res) => {
-    res.send(req.lapso);
+router.get(serverRoutes.director.seeCurrentLapse, async (req, res) => {
+    const periodo = await Periodo.find().sort({ _id: -1 }).limit(1);
+    const lapso = (periodo[0] && periodo[0].lapsos.length > 0) ? periodo[0].lapsos[periodo[0].lapsos.length - 1] : null;
+    res.send(lapso)
 })
 
 

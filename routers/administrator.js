@@ -52,6 +52,11 @@ router.delete(serverRoutes.administrator.deleteAdministrator, auth, async (req, 
 router.post(serverRoutes.administrator.login, async (req, res) => {
     try {
         const administrador = await Administrator.findByCredentials(req.body.email, req.body.password);
+
+        if (!administrador.habilitado) {
+            throw new Error("Usted está inhabilitado")
+        }
+        
         const token = await administrador.generateAuthToken();
 
         res.send({ administrador, token });

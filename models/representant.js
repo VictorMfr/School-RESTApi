@@ -72,7 +72,6 @@ const representantSchema = new mongoose.Schema({
             cedula_escolar: {
                 type: String,
                 required: true,
-                unique: true
             },
             año_escolar: {
                 type: String,

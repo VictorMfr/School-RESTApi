@@ -39,7 +39,7 @@ const getDatosEstudiante = async (periodo, lapso, id_estudiante, opciones) => {
 
     // Buscar Docente basado en su correo
     const docentes = await Profesor.find();
-    const docente = docentes.find(doc => doc.email == estudianteEnPeriodoSeccion.docente).name;
+    const docente = docentes.find(doc => doc.email == estudianteEnPeriodoSeccion.docente);
 
     return {
         periodoEscolar: periodo.periodo,
@@ -56,11 +56,14 @@ const getDatosEstudiante = async (periodo, lapso, id_estudiante, opciones) => {
         seccion: estudianteEnPeriodoSeccion.seccion,
         rasgos: opciones && opciones.rasgos && estudianteEnPeriodo.rasgos ? estudianteEnPeriodo.rasgos : undefined,
         informe_descriptivo: opciones && opciones.informe_descriptivo && estudianteEnPeriodo.informe_descriptivo ? estudianteEnPeriodo.informe_descriptivo : undefined,
-        docente
+        docente_email:  docente.email,
+        docente: docente.name
     }
 }
 
 const getDatosEstudianteEnPeriodo = async (periodo, lapso, id_estudiante, opciones) => {
+
+    console.log(periodo, lapso, id_estudiante, opciones)
 
     // Buscar estudiante en Periodo
     const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
@@ -72,10 +75,10 @@ const getDatosEstudianteEnPeriodo = async (periodo, lapso, id_estudiante, opcion
     console.log(id_estudiante)
 
     const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
-        return seccion.estudiantes.find(est => est._id == id_estudiante)
+        return seccion.estudiantes.find(est => est._id.toString() == id_estudiante)
     })
 
-    const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id == id_estudiante)
+    const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id.toString() == id_estudiante)
 
     if (opciones && opciones.getDatosFunctionOrigin) {
         return {
@@ -131,6 +134,11 @@ router.delete(serverRoutes.professor.deleteProfessor, auth, async (req, res) => 
 router.post(serverRoutes.professor.login, async (req, res) => {
     try {
         const profesor = await Profesor.findByCredentials(req.body.email, req.body.password);
+
+        if (!profesor.habilitado) {
+            throw new Error("Usted está inhabilitado")
+        }
+
         const token = await profesor.generateAuthToken();
         res.send({ profesor, token });
     } catch (error) {
@@ -213,6 +221,14 @@ router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
         // Se toma el lapso correspondiente
         const lapso = req.lapso;
 
+        
+
+        if (!lapso) {
+            let staticProfesores = []
+            profesores.forEach(prof => staticProfesores.push({...prof._doc, static: true}))
+            return res.send(staticProfesores);
+        }
+
         // Se debe tomar el grado y seccion correspondiente
         res.send(profesores);
     } catch (error) {
@@ -251,7 +267,7 @@ router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, re
 
         // Saber a qué clase se refiere para eliminar
         const clasePorEliminar = req.params.id_clase;
-
+        
         // Buscar el profesor, actualizar la lista
         const profesor = await Profesor.findById(req.params.id_docente);
 
@@ -407,7 +423,8 @@ router.get(serverRoutes.professor.seeProfessorStudents, auth, async (req, res) =
 
             const gradoCorrespondiente = lapsoActual.grados.find(grad => grad.grado == grado);
 
-            const seccionCorrespondiente = gradoCorrespondiente.secciones.find(sec => sec.seccion == seccion.toUpperCase())
+            const seccionCorrespondiente = gradoCorrespondiente.secciones.find(sec => (sec.seccion == seccion.toUpperCase() || sec.seccion == seccion.toLowerCase()))
+
 
             let estudiantes = seccionCorrespondiente.estudiantes
 
@@ -461,7 +478,7 @@ router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) =
     try {
 
         // Se busca el estudiante en el periodo dado id_estudiante como identificador
-        const estudianteEnPeriodo = getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
+        const estudianteEnPeriodo = await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
 
         // Se aplican los cambios al Estudiante
         estudianteEnPeriodo.informe_descriptivo = descripcion;
@@ -482,7 +499,7 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
 
     try {
 
-        const estudianteEnPerido = getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
+        const estudianteEnPeriodo = await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
         
         // Se aplican los cambios al Estudiante
         estudianteEnPeriodo.rasgos = rasgos;
@@ -569,11 +586,6 @@ router.get(serverRoutes.professor.SeeStudentReport, auth, async (req, res) => {
 
         const estudianteEnPeriodo = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante, { informe_descriptivo: true });
 
-        // Verificar si tiene ya cargado un informe descriptivo
-        if (!estudianteEnPeriodo.informe_descriptivo) {
-            throw new Error("El estudiante no tiene informe descriptivo todavía")
-        }
-
         res.status(200).send({message: { datosInforme: estudianteEnPeriodo }});
     } catch (error) {
         handleError(error, res)
@@ -600,7 +612,7 @@ router.get(serverRoutes.professor.seeStudentPersonalTraits, auth, async (req, re
 // Ver boletin final
 router.get(serverRoutes.professor.seeBulletin, auth, async (req, res) => {
     try {
-        const datosBoletin = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante);
+        const datosBoletin = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante, {literal_calificativo_final: true});
 
         res.status(200).send({ message: { datosBoletin } });
     } catch (error) {

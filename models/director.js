@@ -63,13 +63,13 @@ directorSchema.statics.findByCredentials = async (email, password) => {
     const director = await Director.findOne({ email });
 
     if (!director) {
-        throw new Error('Director not found');
+        throw new Error('Director no encontrado');
     }
 
     const isMatch = await bcrypt.compare(password, director.password);
 
     if (!isMatch) {
-        throw new Error('Incorrect password');
+        throw new Error('Contraseña incorrecta');
     }
 
     return director;
