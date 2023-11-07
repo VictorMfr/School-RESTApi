@@ -132,24 +132,28 @@ router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
         checkAuths.checkIfAuthDirector(req);
 
         const periodo = req.periodo;
-    
+
 
         // Verificar si el lapso es igual que los anteriores
-        
+
 
         // Añadir lapso
         console.log(req.lapso)
-        periodo.lapsos.push({lapso: req.lapso && req.lapso.lapso? req.lapso.lapso + 1: 1, ...req.body});
-        
-        // Eliminando todos los calificativos de los estudiantes de la base de datos estatica
+        periodo.lapsos.push({ lapso: req.lapso && req.lapso.lapso ? req.lapso.lapso + 1 : 1, ...req.body });
+
+        // Eliminando datos de los estudiantes de la base de datos estatica como grado, seccion y calificativos
         const representantes = await Representante.find();
 
         representantes.forEach(async (representante) => {
             representante.hijos_estudiantes.forEach(h_est => {
                 h_est.hijo_estudiante.literal_calificativo_final = undefined
+                h_est.hijo_estudiante.grado = undefined
+                h_est.hijo_estudiante.seccion = undefined
             })
             await representante.save();
         })
+
+
 
         // Eliminando todos las clases del profesor en la base de datos estatica
         const profesores = await Profesor.find();
@@ -158,8 +162,8 @@ router.post(serverRoutes.director.newLapse, auth, async (req, res) => {
             profesor.clases_asignadas = []
             await profesor.save();
         })
-        
-        
+
+
         await periodo.save();
 
         res.send(periodo)
@@ -225,7 +229,18 @@ router.post(serverRoutes.director.addSections, auth, async (req, res) => {
 
         const secciones = req.body.secciones;
 
-        periodo.lapsos[periodo.lapsos.length -1].grados.map(grado => grado.secciones = [...secciones] )
+        // Verificacion de seccion existente
+        periodo.lapsos[periodo.lapsos.length - 1].grados.map(grado => {
+            // Necesito tomar las secciones nuevas y verificar si esas secciones coincide con algun existente
+            secciones.forEach(seccion => { // {seccion: "b"}
+                if (grados[0].secciones.map(sec => { return sec.seccion  }).includes(seccion.seccion)) {
+                    throw new Error(`la seccion ${seccion.seccion} ya existe en la base de datos`)
+                }
+            })
+        })
+
+        periodo.lapsos[periodo.lapsos.length -1].grados.map(grado => grado.secciones = [ ...grado.secciones, ...secciones] )
+
 
         await periodo.save();
         res.send(periodo)

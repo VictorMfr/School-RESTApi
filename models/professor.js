@@ -88,13 +88,13 @@ professorSchema.statics.findByCredentials = async (email, password) => {
     const professor = await Professor.findOne({ email })
 
     if (!professor) {
-        throw new Error('Unable to login')
+        throw new Error('El profesor no se encuentra registrado')
     }
 
     const isMatch = await bcrypt.compare(password, professor.password)
 
     if (!isMatch) {
-        throw new Error('Unable to login')
+        throw new Error('Contraseña incorrecta')
     }
 
     return professor

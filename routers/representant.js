@@ -12,11 +12,6 @@ const auth = require("../middleware/auth");
 const router = new express.Router();
 
 
-
-
-
-
-
 // Registro de representante: Solo Director y Administrador
 router.post(serverRoutes.representant.newRepresentant, auth, async (req, res) => {
   try {
@@ -169,8 +164,13 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
 
     // Accediendo a una lista de estudiantes hijos
     let estudiantes_hijos = representante.hijos_estudiantes.map(est => {
-      return { ...est.hijo_estudiante }
+      return { ...est.hijo_estudiante, _id: est._id }
     })
+
+    // Si no existe lapso, o bien grados, o bien secciones
+    if (!req.lapso || (req.lapso && !req.lapso.grados) || (req.lapso && req.lapso.grados && req.lapso.grados[0].secciones)) {
+      return res.send({ message: estudiantes_hijos });
+    }
 
     // Ahora es necesario obtener la id del estudiante del periodo
     estudiantes_hijos = estudiantes_hijos.map(est => {
@@ -267,7 +267,6 @@ router.get(serverRoutes.representant.student.seeAllStudents, auth, async (req, r
       return res.send(estudiantes);
     }
 
-    console.log(estudiantesEnPeriodo);
     //await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, )
 
     res.send(estudiantesEnPeriodo);
@@ -293,9 +292,43 @@ router.patch(serverRoutes.representant.student.transferSectionStudent, auth, asy
     const estudianteId = req.params.id_estudiante;
     const nuevaSeccion = req.body.seccion;
 
-    representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId).hijo_estudiante.seccion = nuevaSeccion;
+    // Hacer el cambio en la tabla estatica
+    // tengo la id del periodo
 
+    // Buscar estudiante en Periodo
+    const estudianteEnPeriodoGrado = req.lapso.grados.find(grado => {
+      return grado.secciones.find(seccion => {
+        return seccion.estudiantes.find(est => est._id == estudianteId)
+      })
+    })
+
+    let estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+      return seccion.estudiantes.find(est => est._id.toString() == estudianteId)
+    })
+
+    const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id.toString() == estudianteId)
+
+    // Tomar la cédula y buscar el estudiante en la tabla estatica en base a su cedula
+    const cedulaEstudiante = estudianteEnPeriodo.cedula_escolar;
+
+    // Hacer los cambios
+    representante.hijos_estudiantes.find(hijo => hijo.hijo_estudiante.cedula_escolar.toString() == cedulaEstudiante).hijo_estudiante.seccion = nuevaSeccion;
     await representante.save();
+
+    // Remover el estudiante de la seccion en el que está
+    const lapsoIndex = req.periodo.lapsos.length - 1;
+    const gradoIndex = req.periodo.lapsos[lapsoIndex].grados.findIndex(grad => grad.grado == estudianteEnPeriodoGrado.grado)
+    const seccionIndex = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones.findIndex(sec => sec.seccion == estudianteEnPeriodoSeccion.seccion)
+    
+    req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes.filter(est => est.cedula_escolar !== cedulaEstudiante);
+
+    // Asignarlo en la nueva seccion
+    const nuevaSeccionIndex = estudianteEnPeriodoGrado.secciones.findIndex(sec => sec.seccion == nuevaSeccion);
+    req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[nuevaSeccionIndex].estudiantes = [...req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[nuevaSeccionIndex].estudiantes, estudianteEnPeriodo]
+    
+    // Guardar cambios
+    await req.periodo.save();
+
 
     res.send({ message: 'Sección del estudiante actualizada exitosamente' });
   } catch (error) {
@@ -346,10 +379,9 @@ router.patch(serverRoutes.representant.student.editStudent, auth, async (req, re
 
 // Retirar Seccion Estudiante: Solo Director y Administrador
 router.patch(serverRoutes.representant.student.removeSection, auth, async (req, res) => {
-
-  const estudianteId = req.params.id_estudiante;
-
   try {
+    // Verificando si se trata de un Director o Administrador
+    checkAuths.checkIfAuthDirectorOrAdministrator(req)
 
     // Verificar si existe el representante
     const representante = await Representante.findOne({ _id: req.params.id_representante });
@@ -358,21 +390,44 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
       throw new Error('El representante no existe');
     }
 
+    const estudianteId = req.params.id_estudiante;
+    const nuevaSeccion = req.body.seccion;
 
-    // Buscar el estudiante dentro de la lista hijos_estudiantes del representante
-    const estudiante = representante.hijos_estudiantes.find(hijo => hijo._id.toString() === estudianteId);
+    // Hacer el cambio en la tabla estatica
+    // tengo la id del periodo
 
-    if (!estudiante) {
-      return res.status(404).send({ error: 'Estudiante no encontrado en la lista del representante' });
-    }
+    // Buscar estudiante en Periodo
+    const estudianteEnPeriodoGrado = req.lapso.grados.find(grado => {
+      return grado.secciones.find(seccion => {
+        return seccion.estudiantes.find(est => est._id == estudianteId)
+      })
+    })
 
-    // Retirar la sección, asignando null al campo "seccion" del estudiante
-    estudiante.hijo_estudiante.seccion = undefined;
+    let estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+      return seccion.estudiantes.find(est => est._id.toString() == estudianteId)
+    })
 
-    // Guardar los cambios en el representante
+    const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est._id.toString() == estudianteId)
+
+    // Tomar la cédula y buscar el estudiante en la tabla estatica en base a su cedula
+    const cedulaEstudiante = estudianteEnPeriodo.cedula_escolar;
+
+    // Hacer los cambios
+    representante.hijos_estudiantes.find(hijo => hijo.hijo_estudiante.cedula_escolar.toString() == cedulaEstudiante).hijo_estudiante.seccion = nuevaSeccion;
     await representante.save();
 
-    res.send({ message: 'Sección del estudiante retirada exitosamente' });
+    // Remover el estudiante de la seccion en el que está
+    const lapsoIndex = req.periodo.lapsos.length - 1;
+    const gradoIndex = req.periodo.lapsos[lapsoIndex].grados.findIndex(grad => grad.grado == estudianteEnPeriodoGrado.grado)
+    const seccionIndex = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones.findIndex(sec => sec.seccion == estudianteEnPeriodoSeccion.seccion)
+    
+    req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes.filter(est => est.cedula_escolar !== cedulaEstudiante);
+
+    // Guardar cambios
+    await req.periodo.save();
+
+
+    res.send({ message: 'Sección del estudiante actualizada exitosamente' });
   } catch (error) {
     handleError(error, res)
   }

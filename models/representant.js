@@ -112,13 +112,13 @@ representantSchema.statics.findByCredentials = async (email, password) => {
     const representant = await Representant.findOne({ email });
 
     if (!representant) {
-        throw new Error('Unable to login');
+        throw new Error('El representante no se encuentra registrado');
     }
 
     const isMatch = await bcrypt.compare(password, representant.password);
 
     if (!isMatch) {
-        throw new Error('Unable to login');
+        throw new Error('Contraseña incorrecta');
     }
 
     return representant;

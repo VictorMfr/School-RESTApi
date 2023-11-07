@@ -68,13 +68,13 @@ administratorSchema.statics.findByCredentials = async (email, password) => {
     const admin = await administrator.findOne({ email })
 
     if (!admin) {
-        throw new Error('Unable to login')
+        throw new Error('El administrador no se encuentra registrado')
     }
 
     const isMatch = await bcrypt.compare(password, admin.password)
 
     if (!isMatch) {
-        throw new Error('Unable to login')
+        throw new Error('Contraseña incorrecta')
     }
 
     return admin
