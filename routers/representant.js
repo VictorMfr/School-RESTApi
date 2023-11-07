@@ -168,7 +168,7 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
     })
 
     // Si no existe lapso, o bien grados, o bien secciones
-    if (!req.lapso || (req.lapso && !req.lapso.grados) || (req.lapso && req.lapso.grados && req.lapso.grados[0].secciones)) {
+    if (!req.lapso || (req.lapso && !req.lapso.grados) || (req.lapso && req.lapso.grados && !req.lapso.grados[0].secciones)) {
       return res.send({ message: estudiantes_hijos });
     }
 
@@ -200,7 +200,6 @@ router.get(serverRoutes.representant.student.seeStudents, auth, async (req, res)
         _id: estudianteEnPeriodo._id
       }
     })
-
 
     res.send({ message: estudiantes_hijos });
 

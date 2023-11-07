@@ -51,12 +51,12 @@ const getDatosEstudiante = async (periodo, lapso, id_estudiante, opciones) => {
         representante: representanteEncontrado.name,
         director: directorEncontrado.username,
         direccion: estudiante.direccion,
-        literal_calificativo_final: opciones && opciones.literal_calificativo_final && estudianteEnPeriodo.literal_calificativo_final? estudianteEnPeriodo.literal_calificativo_final: undefined,
+        literal_calificativo_final: opciones && opciones.literal_calificativo_final && estudianteEnPeriodo.literal_calificativo_final ? estudianteEnPeriodo.literal_calificativo_final : undefined,
         grado: estudianteEnPeriodoGrado.grado,
         seccion: estudianteEnPeriodoSeccion.seccion,
         rasgos: opciones && opciones.rasgos && estudianteEnPeriodo.rasgos ? estudianteEnPeriodo.rasgos : undefined,
         informe_descriptivo: opciones && opciones.informe_descriptivo && estudianteEnPeriodo.informe_descriptivo ? estudianteEnPeriodo.informe_descriptivo : undefined,
-        docente_email:  docente.email,
+        docente_email: docente.email,
         docente: docente.name
     }
 }
@@ -71,8 +71,6 @@ const getDatosEstudianteEnPeriodo = async (periodo, lapso, id_estudiante, opcion
             return seccion.estudiantes.find(est => est._id == id_estudiante)
         })
     })
-
-    console.log(id_estudiante)
 
     const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
         return seccion.estudiantes.find(est => est._id.toString() == id_estudiante)
@@ -221,11 +219,11 @@ router.get(serverRoutes.professor.seeProfessors, auth, async (req, res) => {
         // Se toma el lapso correspondiente
         const lapso = req.lapso;
 
-        
+
 
         if (!lapso) {
             let staticProfesores = []
-            profesores.forEach(prof => staticProfesores.push({...prof._doc, static: true}))
+            profesores.forEach(prof => staticProfesores.push({ ...prof._doc, static: true }))
             return res.send(staticProfesores);
         }
 
@@ -267,7 +265,7 @@ router.patch(serverRoutes.professor.unassignClassProfessor, auth, async (req, re
 
         // Saber a qué clase se refiere para eliminar
         const clasePorEliminar = req.params.id_clase;
-        
+
         // Buscar el profesor, actualizar la lista
         const profesor = await Profesor.findById(req.params.id_docente);
 
@@ -500,7 +498,7 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
     try {
 
         const estudianteEnPeriodo = await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
-        
+
         // Se aplican los cambios al Estudiante
         estudianteEnPeriodo.rasgos = rasgos;
 
@@ -586,7 +584,7 @@ router.get(serverRoutes.professor.SeeStudentReport, auth, async (req, res) => {
 
         const estudianteEnPeriodo = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante, { informe_descriptivo: true });
 
-        res.status(200).send({message: { datosInforme: estudianteEnPeriodo }});
+        res.status(200).send({ message: { datosInforme: estudianteEnPeriodo } });
     } catch (error) {
         handleError(error, res)
     }
@@ -612,9 +610,10 @@ router.get(serverRoutes.professor.seeStudentPersonalTraits, auth, async (req, re
 // Ver boletin final
 router.get(serverRoutes.professor.seeBulletin, auth, async (req, res) => {
     try {
-        const datosBoletin = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante, {literal_calificativo_final: true});
 
+        const datosBoletin = await getDatosEstudiante(req.periodo, req.lapso, req.params.id_estudiante, { literal_calificativo_final: true });
         res.status(200).send({ message: { datosBoletin } });
+
     } catch (error) {
         handleError(error, res)
     }
