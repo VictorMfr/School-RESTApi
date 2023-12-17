@@ -244,21 +244,29 @@ router.get(serverRoutes.representant.student.seeAllStudents, auth, async (req, r
         })
       });
 
-      if (!estudianteEnPeriodoGrado) {
+      if (!estudianteEnPeriodoGrado && !req.lapso.grados) {
         estudiantesEnPeriodoFlag = true; // Establecer la bandera en verdadero
         break; // Salir del bucle
       }
 
-      const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
-        return seccion.estudiantes.find(est => est.cedula_escolar == cedula)
-      });
+      if (estudianteEnPeriodoGrado) {
 
-      const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar == cedula)
+        const estudianteEnPeriodoSeccion = estudianteEnPeriodoGrado.secciones.find(seccion => {
+          return seccion.estudiantes.find(est => est.cedula_escolar == cedula)
+        });
 
-      estudiantesEnPeriodo.push({
-        ...est,
-        _id: estudianteEnPeriodo._id
-      });
+        const estudianteEnPeriodo = estudianteEnPeriodoSeccion.estudiantes.find(est => est.cedula_escolar == cedula)
+
+        estudiantesEnPeriodo.push({
+          ...est,
+          _id: estudianteEnPeriodo._id
+        });
+      } else {
+        estudiantesEnPeriodo.push({
+          ...est,
+        });
+      }
+
     }
 
     // Verificar la bandera y responder en consecuencia
@@ -266,7 +274,7 @@ router.get(serverRoutes.representant.student.seeAllStudents, auth, async (req, r
       return res.send(estudiantes);
     }
 
-    //await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, )
+
 
     res.send(estudiantesEnPeriodo);
   } catch (error) {
@@ -318,13 +326,13 @@ router.patch(serverRoutes.representant.student.transferSectionStudent, auth, asy
     const lapsoIndex = req.periodo.lapsos.length - 1;
     const gradoIndex = req.periodo.lapsos[lapsoIndex].grados.findIndex(grad => grad.grado == estudianteEnPeriodoGrado.grado)
     const seccionIndex = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones.findIndex(sec => sec.seccion == estudianteEnPeriodoSeccion.seccion)
-    
+
     req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes.filter(est => est.cedula_escolar !== cedulaEstudiante);
 
     // Asignarlo en la nueva seccion
     const nuevaSeccionIndex = estudianteEnPeriodoGrado.secciones.findIndex(sec => sec.seccion == nuevaSeccion);
     req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[nuevaSeccionIndex].estudiantes = [...req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[nuevaSeccionIndex].estudiantes, estudianteEnPeriodo]
-    
+
     // Guardar cambios
     await req.periodo.save();
 
@@ -395,10 +403,15 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
     // Hacer el cambio en la tabla estatica
     // tengo la id del periodo
 
+
     // Buscar estudiante en Periodo
     const estudianteEnPeriodoGrado = req.lapso.grados.find(grado => {
       return grado.secciones.find(seccion => {
-        return seccion.estudiantes.find(est => est._id == estudianteId)
+        return seccion.estudiantes.find(est => {
+          console.log(est._id)
+          console.log(estudianteId)
+          return est._id == estudianteId
+        })
       })
     })
 
@@ -419,7 +432,7 @@ router.patch(serverRoutes.representant.student.removeSection, auth, async (req, 
     const lapsoIndex = req.periodo.lapsos.length - 1;
     const gradoIndex = req.periodo.lapsos[lapsoIndex].grados.findIndex(grad => grad.grado == estudianteEnPeriodoGrado.grado)
     const seccionIndex = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones.findIndex(sec => sec.seccion == estudianteEnPeriodoSeccion.seccion)
-    
+
     req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes = req.periodo.lapsos[lapsoIndex].grados[gradoIndex].secciones[seccionIndex].estudiantes.filter(est => est.cedula_escolar !== cedulaEstudiante);
 
     // Guardar cambios
