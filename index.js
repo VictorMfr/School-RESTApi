@@ -16,10 +16,7 @@ const app = express();
 
 //Configurar Express
 app.use(express.json())
-app.use(cors({
-    origin: "*",
-    credentials: true
-}))
+
 
 app.use(directorRouter) // RUTAS ACTOR DIRECTOR
 app.use(administratorRouter) // RUTAS ACTOR ADMINISTRADOR
