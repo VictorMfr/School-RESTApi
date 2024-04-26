@@ -17,7 +17,7 @@ const app = express();
 //Configurar Express
 app.use(express.json())
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: "https://escuela-frontend.netlify.app",
     credentials: true
 }))
 
