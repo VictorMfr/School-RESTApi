@@ -95,6 +95,13 @@ const serverRoutes = {
             removeSection: '/representante/:id_representante/estudiante/:id_estudiante/retirarSeccion',
         }
 
+    },
+    personalTrait: {
+        newPersonalTrait: '/personalTrait',
+        deletePersonalTrait: '/personalTraits/:id_personalTrait',
+        editPersonalTrait: '/personalTrait/:id_personalTrait',
+        seePersonalTraits: '/personalTraits',
+        seePersonalTrait: '/personalTraits/:id_personalTrait',
     }
 }
 

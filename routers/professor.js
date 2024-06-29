@@ -63,8 +63,6 @@ const getDatosEstudiante = async (periodo, lapso, id_estudiante, opciones) => {
 
 const getDatosEstudianteEnPeriodo = async (periodo, lapso, id_estudiante, opciones) => {
 
-    console.log(periodo, lapso, id_estudiante, opciones)
-
     // Buscar estudiante en Periodo
     const estudianteEnPeriodoGrado = lapso.grados.find(grado => {
         return grado.secciones.find(seccion => {
@@ -490,17 +488,36 @@ router.post(serverRoutes.professor.uploadStudentReport, auth, async (req, res) =
     }
 });
 
+
+function transformStringBooleans(obj) {
+    const transformedObj = {};
+  
+    for (let key in obj) {
+      if (obj[key] === 'true') {
+        transformedObj[key] = true;
+      } else if (obj[key] === 'false') {
+        transformedObj[key] = false;
+      } else {
+        transformedObj[key] = obj[key];
+      }
+    }
+  
+    return transformedObj;
+  }
+
 // Establecer rasgos personales: Solo Docente
 router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req, res) => {
     // Tomar los datos de Rasgos Personales
     const { rasgos } = req.body;
+
+    const transformedObj = transformStringBooleans(rasgos);
 
     try {
 
         const estudianteEnPeriodo = await getDatosEstudianteEnPeriodo(req.periodo, req.lapso, req.params.id_estudiante)
 
         // Se aplican los cambios al Estudiante
-        estudianteEnPeriodo.rasgos = rasgos;
+        estudianteEnPeriodo.rasgos = transformedObj;
 
         // Guardar cambios
         await req.periodo.save()
@@ -514,7 +531,6 @@ router.post(serverRoutes.professor.uploadStudentPersonalTraits, auth, async (req
 
 // Registrar Calificativo Final: Solo Docente
 router.post(serverRoutes.professor.registerFinalCalification, auth, async (req, res) => {
-    console.log(req.body)
     const { literal_calificativo_final } = req.body;
 
     try {

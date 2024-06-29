@@ -9,10 +9,10 @@ const Representante = require("../models/representant")
 const Profesor = require("../models/professor");
 
 // Importando MiddleWares
-const auth = require("../middleware/auth")
+const auth = require("../middleware/auth");
 
 // Iniciando Router
-const router = new express.Router()
+const router = new express.Router();
 
 const predefinedSecretKey = process.env.SECRET_KEY;
 
@@ -364,9 +364,5 @@ router.get(serverRoutes.director.seeCurrentLapse, async (req, res) => {
     const lapso = (periodo[0] && periodo[0].lapsos.length > 0) ? periodo[0].lapsos[periodo[0].lapsos.length - 1] : null;
     res.send(lapso)
 })
-
-
-
-
 
 module.exports = router;

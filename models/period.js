@@ -32,55 +32,7 @@ const studentSchema = new mongoose.Schema({
   },
 
   // Rasgos personales al final del lapso
-  rasgos: {
-    motivacion: {
-      type: Boolean,
-    },
-    responsabilidad: {
-      type: Boolean,
-    },
-    organizacion: {
-      type: Boolean,
-    },
-    disciplina: {
-      type: Boolean,
-    },
-    empatia: {
-      type: Boolean,
-    },
-    adaptabilidad: {
-      type: Boolean,
-    },
-    creatividad: {
-      type: Boolean,
-    },
-    trabajo_en_equipo: {
-      type: Boolean,
-    },
-    honestidad: {
-      type: Boolean,
-    },
-    autodireccion: {
-      type: Boolean,
-    },
-    resiliencia: {
-      type: Boolean,
-    },
-    paciencia: {
-      type: Boolean,
-    },
-    pensamiento_critico: {
-      type: Boolean,
-    },
-    tolerancia_frustracion: {
-      type: Boolean,
-    },
-    ambicion: {
-      type: Boolean,
-    },
-
-    // ... Agrega más rasgos aquí si es necesario
-  }
+  rasgos: {}
 });
 
 // Sub-schema para la sección

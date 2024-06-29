@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "jest": "env-cmd -f ./config/dev.env jest administrator.test.js",
     "test": "env-cmd -f ./config/dev.env nodemon index.js",
     "start": "env-cmd -f ./config/dev.env node index.js",
     "init-data": "mongodb\\bin\\mongod.exe --dbpath mongodb-data"
@@ -19,6 +20,10 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.1",
     "mongoose": "^7.3.4",
+    "supertest": "^7.0.0",
     "validator": "^13.9.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

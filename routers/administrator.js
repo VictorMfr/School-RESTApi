@@ -39,7 +39,7 @@ router.delete(serverRoutes.administrator.deleteAdministrator, auth, async (req, 
         const administrador = await Administrator.findOneAndDelete({ _id: req.params.id_administrador });
 
         if (!administrador) {
-            return res.status(404).send();
+            return res.status(500).send();
         }
 
         res.send(administrador);
